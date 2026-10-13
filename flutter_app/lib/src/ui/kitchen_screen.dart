@@ -219,8 +219,10 @@ class _KitchenScreenState extends State<KitchenScreen> {
         runSpacing: 12,
         children: [
           Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.soup_kitchen_outlined, color: K.accent, size: 34),
-            const SizedBox(width: 12),
+            Image.asset('assets/ct-mark.png', height: 44, semanticLabel: 'CT Consult'),
+            const SizedBox(width: 16),
+            Container(width: 1, height: 40, color: K.outlineVariant),
+            const SizedBox(width: 16),
             Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
               Text(k.settings.printerName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: K.white)),
               const SizedBox(height: 2),
@@ -377,7 +379,9 @@ class _KitchenScreenState extends State<KitchenScreen> {
 
   Widget _empty() => const Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.check_circle_outline, size: 72, color: K.ok),
+          Image(image: AssetImage('assets/ct-mark.png'), height: 110, semanticLabel: 'CT Consult'),
+          SizedBox(height: 32),
+          Icon(Icons.check_circle_outline, size: 56, color: K.ok),
           SizedBox(height: 12),
           Text('Ingen bonner venter', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: K.white)),
           SizedBox(height: 8),
