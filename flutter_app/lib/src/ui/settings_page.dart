@@ -1,0 +1,263 @@
+import 'package:flutter/material.dart';
+
+import '../kitchen.dart';
+import '../models.dart';
+import 'theme.dart';
+
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key, required this.kitchen});
+  final Kitchen kitchen;
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late Settings s = widget.kitchen.settings.copy();
+  late final _name = TextEditingController(text: s.printerName);
+  late final _port = TextEditingController(text: '${s.port}');
+  late final _warn = TextEditingController(text: '${s.warnMinutes}');
+  late final _late = TextEditingController(text: '${s.lateMinutes}');
+  late final _keep = TextEditingController(text: _num(s.keepDoneHours));
+  late final _words = TextEditingController(text: s.allergenWords.join(', '));
+  String _msg = '';
+
+  static String _num(double v) => v == v.roundToDouble() ? '${v.round()}' : '$v';
+
+  @override
+  void initState() {
+    super.initState();
+    widget.kitchen.refreshIps();
+  }
+
+  @override
+  void dispose() {
+    for (final c in [_name, _port, _warn, _late, _keep, _words]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final next = s.copy()
+      ..printerName = _name.text.trim().isEmpty ? 'Køkkenprinter 1' : _name.text.trim()
+      ..port = (int.tryParse(_port.text) ?? 9100).clamp(1, 65535)
+      ..warnMinutes = (int.tryParse(_warn.text) ?? 10).clamp(1, 240)
+      ..lateMinutes = (int.tryParse(_late.text) ?? 15).clamp(1, 240)
+      ..keepDoneHours = (double.tryParse(_keep.text.replaceAll(',', '.')) ?? 2).clamp(0, 48)
+      ..allergenWords = _words.text.split(RegExp(r'[,\n]')).map((w) => w.trim()).where((w) => w.isNotEmpty).toList();
+    await widget.kitchen.saveSettings(next);
+    setState(() => _msg = 'Gemt');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: widget.kitchen,
+      builder: (context, _) {
+        final k = widget.kitchen;
+        final st = k.status;
+        return Scaffold(
+          appBar: AppBar(
+            toolbarHeight: 82,
+            leadingWidth: 84,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Center(
+                child: IconButton.filled(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: IconButton.styleFrom(backgroundColor: K.key, foregroundColor: K.ink, minimumSize: const Size(56, 56), shape: const RoundedRectangleBorder(borderRadius: K.radius)),
+                  icon: const Icon(Icons.arrow_back, size: 30, semanticLabel: 'Tilbage til køkkenskærmen'),
+                ),
+              ),
+            ),
+            title: const Text('Opsætning', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(borderRadius: K.radiusPill, border: Border.all(color: st.listening ? K.ok : K.bad)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(st.listening ? Icons.check_circle_outline : Icons.error_outline, color: st.listening ? K.ok : K.bad, size: 20),
+                  const SizedBox(width: 6),
+                  Text(st.listening ? 'Lytter på port ${st.port}' : (st.error ?? 'Lytter ikke'),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: st.listening ? K.ok : K.bad)),
+                ]),
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: LayoutBuilder(builder: (context, c) {
+              final wide = c.maxWidth > 900;
+              final left = _panel(Icons.lan_outlined, 'Printer-emulering', [
+                const Text(
+                  'Skærmen svarer som en kitchen printer. Kassen sender bonner til denne enheds IP-adresse og port, som den ellers ville printe til.',
+                  style: TextStyle(fontSize: 15, height: 1.4, color: K.muted),
+                ),
+                _field('Printernavn', _name),
+                _row([
+                  _field('Port', _port, number: true),
+                  _drop('Protokol', s.protocol, const {'escpos': 'ESC/POS (Epson m.fl.)', 'star': 'Star Line'}, (v) => s.protocol = v),
+                ]),
+                _drop('Tegnsæt', s.charset, const {
+                  'auto': 'Automatisk',
+                  'cp865': 'PC865 nordisk',
+                  'cp850': 'PC850',
+                  'cp858': 'PC858 (med €)',
+                  'cp1252': 'Windows-1252',
+                  'utf8': 'UTF-8',
+                  'cp437': 'PC437',
+                }, (v) => s.charset = v),
+                const Text('Denne enheds IP-adresser', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: K.ink)),
+                Wrap(spacing: 8, runSpacing: 8, children: [
+                  if (k.ips.isEmpty) const Text('Ingen netværksforbindelse fundet', style: TextStyle(color: K.muted)),
+                  for (final ip in k.ips)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: const BoxDecoration(color: K.paper, borderRadius: K.radius),
+                      child: Text.rich(TextSpan(children: [
+                        TextSpan(text: ip.address, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: K.white)),
+                        TextSpan(text: '  ${ip.iface}', style: const TextStyle(fontSize: 13, color: K.muted)),
+                      ])),
+                    ),
+                ]),
+                const Text(
+                  'Giv tabletten en fast IP-adresse i Wi-Fi-indstillingerne (eller reservér den i routeren), og indtast den samme adresse og port i kassen.',
+                  style: TextStyle(fontSize: 14, height: 1.4, color: K.muted),
+                ),
+              ]);
+              final right = Column(children: [
+                _panel(Icons.tune, 'Visning', [
+                  _row([
+                    _drop('Tekststørrelse', '${s.zoom}', {for (final z in Settings.zooms) '$z': '${(z * 100).round()}%'}, (v) => s.zoom = double.parse(v)),
+                    _drop('Layout', s.layout, const {'auto': 'Automatisk', 'landscape': 'Liggende', 'portrait': 'Stående'}, (v) => s.layout = v),
+                  ]),
+                  _row([
+                    _field('Gul efter (min)', _warn, number: true),
+                    _field('Rød efter (min)', _late, number: true),
+                  ]),
+                  _row([
+                    _drop('Bonvisning', s.view, const {'parsed': 'Opdelt', 'original': 'Original bon'}, (v) => s.view = v),
+                    _field('Gem afsluttede (timer)', _keep, number: true),
+                  ]),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(borderRadius: K.radius, border: Border.all(color: K.outlineVariant)),
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.notifications_active_outlined, color: K.ink),
+                      title: const Text('Lyd ved ny bon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: K.ink)),
+                      value: s.sound,
+                      onChanged: (v) => setState(() => s.sound = v),
+                    ),
+                  ),
+                  _field('Allergen-ord (adskilt med komma)', _words, lines: 3),
+                ]),
+                const SizedBox(height: 16),
+                _panel(Icons.receipt_long_outlined, 'Drift', [
+                  Wrap(spacing: 12, runSpacing: 12, children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        k.sendTestTicket();
+                        setState(() => _msg = 'Testbon sendt til skærmen');
+                      },
+                      icon: const Icon(Icons.print_outlined),
+                      label: const Text('Modtag testbon'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final ok = await showDialog<bool>(
+                          context: context,
+                          builder: (c) => AlertDialog(
+                            backgroundColor: K.card,
+                            title: const Text('Ryd alle bonner?'),
+                            content: const Text('Alle bonner fjernes, også de afsluttede.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Annullér')),
+                              FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Ryd alle')),
+                            ],
+                          ),
+                        );
+                        if (ok == true) {
+                          k.clearAll();
+                          setState(() => _msg = 'Alle bonner er fjernet');
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(foregroundColor: K.bad, side: const BorderSide(color: K.bad)),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Ryd alle bonner'),
+                    ),
+                  ]),
+                  Text(
+                    st.lastJobAt != null ? 'Sidste bon modtaget kl. ${hhmm(st.lastJobAt!)} · ${st.jobs} siden start' : 'Ingen bonner modtaget siden start.',
+                    style: const TextStyle(fontSize: 14, color: K.muted),
+                  ),
+                ]),
+              ]);
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: wide
+                    ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Expanded(child: left),
+                        const SizedBox(width: 16),
+                        Expanded(child: right),
+                      ])
+                    : Column(children: [left, const SizedBox(height: 16), right]),
+              );
+            }),
+          ),
+          bottomNavigationBar: Container(
+            color: K.paperBar,
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
+            child: Row(children: [
+              Expanded(child: Text(_msg, style: const TextStyle(fontSize: 16, color: K.muted))),
+              OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annullér')),
+              const SizedBox(width: 12),
+              FilledButton.icon(onPressed: _save, icon: const Icon(Icons.check), label: const Text('Gem')),
+            ]),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _panel(IconData icon, String title, List<Widget> children) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(color: K.card, borderRadius: K.radius14),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Icon(icon, color: K.accent, size: 26),
+            const SizedBox(width: 10),
+            Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: K.white)),
+          ]),
+          for (final c in children) ...[const SizedBox(height: 16), c],
+        ]),
+      );
+
+  Widget _row(List<Widget> children) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(width: 14),
+          Expanded(child: children[i]),
+        ],
+      ]);
+
+  Widget _field(String label, TextEditingController c, {bool number = false, int lines = 1}) => TextField(
+        controller: c,
+        maxLines: lines,
+        keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        style: TextStyle(fontSize: lines > 1 ? 16 : 20, color: K.ink),
+        decoration: InputDecoration(labelText: label),
+      );
+
+  Widget _drop(String label, String value, Map<String, String> options, void Function(String) onChanged) => DropdownButtonFormField<String>(
+        initialValue: options.containsKey(value) ? value : options.keys.first,
+        isExpanded: true,
+        dropdownColor: K.key,
+        style: const TextStyle(fontSize: 20, color: K.ink),
+        decoration: InputDecoration(labelText: label),
+        items: [for (final e in options.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
+        onChanged: (v) {
+          if (v != null) setState(() => onChanged(v));
+        },
+      );
+}

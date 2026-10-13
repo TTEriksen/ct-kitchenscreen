@@ -16,6 +16,8 @@ A kitchen display that pretends to be a network kitchen printer. Point the till'
 
 The screen text is in Danish, following the UNIPOS Staff design system.
 
+There is also a native **iPad and Android tablet app** in [`flutter_app/`](flutter_app/README.md). The tablet itself is the printer, so no server is needed.
+
 ## Requirements
 
 - Node.js 18 or newer (no `npm install` needed: no dependencies)
