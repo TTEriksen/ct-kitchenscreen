@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'models.dart';
 import 'printer/escpos.dart';
@@ -50,13 +49,23 @@ class Kitchen extends ChangeNotifier {
   Stream<Ticket> get arrivals => _arrivals.stream;
 
   static Future<Kitchen> open() async {
-    final dir = await getApplicationSupportDirectory();
+    final dir = await _dataDir();
     final k = Kitchen._(dir);
     await k._load();
     await k.startPrinter();
     k.refreshIps();
     k._purgeTimer = Timer.periodic(const Duration(minutes: 1), (_) => k._purge());
     return k;
+  }
+
+  /// The app's own private storage, found from its temp folder so no
+  /// platform plugin is needed: iOS keeps it in Library/Application Support,
+  /// Android in the app's files folder.
+  static Future<Directory> _dataDir() async {
+    final root = Directory.systemTemp.parent.path;
+    final dir = Directory(Platform.isIOS || Platform.isMacOS ? '$root/Library/Application Support' : '$root/files');
+    await dir.create(recursive: true);
+    return dir;
   }
 
   File get _ticketsFile => File('${_dir.path}/tickets.json');
