@@ -1,0 +1,10 @@
+{
+  "name": "Køkkenskærm",
+  "short_name": "Køkken",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#221b14",
+  "theme_color": "#2e251c",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

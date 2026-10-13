@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<title>Køkkenskærm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; height: 100vh; min-height: 560px; box-sizing: border-box; display: flex; flex-direction: column; background: #221b14; color: #f0dfd7; font-family: Roboto, 'SF Pro Text', system-ui, -apple-system, 'Segoe UI', sans-serif; overflow: hidden">
+
+<header style="flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 12px 16px; background: #2e251c; color: #ffffff">
+  <div style="display: flex; align-items: center; gap: 12px; min-width: 0">
+    <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 34px; color: #c67139">skillet</span>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700; line-height: 1.1">Køkken</h1>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #6fbfa6"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 18px">check_circle</span>Printer 192.168.1.50 · forbundet</span>
+    </div>
+  </div>
+
+  <div role="status" style="flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 24px">
+    <div style="display: flex; align-items: baseline; gap: 10px">
+      <span style="font-size: 48px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums">{{waitingCount}}</span>
+      <span style="font-size: 22px; font-weight: 600">{{waitingLabel}}</span>
+    </div>
+    <span aria-hidden="true" style="width: 1px; height: 40px; background: #52443c"></span>
+    <div style="display: flex; align-items: baseline; gap: 8px">
+      <span style="font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums">{{dishCount}}</span>
+      <span style="font-size: 18px; color: #b3a18b">retter i alt</span>
+    </div>
+    <sc-if value="{{hasOldest}}" hint-placeholder-val="{{true}}">
+      <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 18px; font-weight: 700; border: 2px solid {{oldestColor}}; color: {{oldestInk}}; background: {{oldestBg}}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 22px">alarm</span>Ældste {{oldestText}}</span>
+    </sc-if>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+    <div role="group" aria-label="Tekststørrelse" style="display: flex; align-items: center; border: 1px solid #9f8d84; border-radius: 12px; overflow: hidden">
+      <button onClick="{{zoomOut}}" aria-label="Mindre tekst" style="width: 64px; height: 56px; border: none; background: #3d332d; color: #f0dfd7; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: {{zoomOutOpacity}}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 30px">text_decrease</span></button>
+      <span style="min-width: 76px; text-align: center; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums">{{zoomLabel}}</span>
+      <button onClick="{{zoomIn}}" aria-label="Større tekst" style="width: 64px; height: 56px; border: none; background: #3d332d; color: #f0dfd7; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: {{zoomInOpacity}}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 30px">text_increase</span></button>
+    </div>
+    <button onClick="{{openRecall}}" style="height: 58px; padding: 0 18px; border: 1px solid #9f8d84; border-radius: 12px; background: transparent; color: #f0dfd7; font-family: inherit; font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">history</span>Afsluttede<span style="min-width: 28px; padding: 2px 8px; box-sizing: border-box; border-radius: 20px; background: #3d332d; font-size: 15px; font-weight: 700; text-align: center">{{doneCount}}</span></button>
+    <a href="Setup.dc.html" aria-label="Opsætning" style="width: 58px; height: 58px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; color: #f0dfd7; display: flex; align-items: center; justify-content: center; text-decoration: none"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 28px">settings</span></a>
+    <span style="padding-left: 8px; font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums">{{clock}}</span>
+  </div>
+</header>
+
+<main style="flex: 1 1 auto; min-height: 0; display: flex">
+  <sc-if value="{{hasTickets}}" hint-placeholder-val="{{true}}">
+    <div ref="{{setRail}}" onScroll="{{onRailScroll}}" style="flex: 1 1 auto; min-width: 0; display: {{railDisplay}}; grid-template-columns: {{railCols}}; align-items: {{railAlign}}; gap: 0.6em; padding: 16px; box-sizing: border-box; overflow-x: {{railOx}}; overflow-y: {{railOy}}; scroll-snap-type: {{railSnap}}; scroll-padding: 16px; scrollbar-width: thin; scrollbar-color: #52443c transparent; font-size: {{fontSize}}">
+      <sc-for list="{{tickets}}" as="t" hint-placeholder-count="5">
+        <article aria-label="{{t.aria}}" style="flex: 0 0 17em; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; border-radius: 12px; overflow: hidden; background: #2b231b; scroll-snap-align: start; border: {{t.border}}">
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5em; padding: 0.55em 0.8em; background: #2e251c">
+            <div style="display: flex; align-items: baseline; gap: 0.35em; min-width: 0">
+              <span style="font-size: 0.95em; font-weight: 600; color: #b3a18b">{{t.headLabel}}</span>
+              <span style="font-size: 2.1em; font-weight: 800; line-height: 1; color: #ffffff">{{t.headValue}}</span>
+            </div>
+            <span style="display: inline-flex; align-items: center; gap: 0.25em; padding: 0.2em 0.55em; border-radius: 20px; font-size: 0.95em; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; border: 2px solid {{t.ageColor}}; color: {{t.ageInk}}; background: {{t.ageBg}}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 1.15em">schedule</span>{{t.ageText}}</span>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5em; padding: 0.45em 0.8em; border-bottom: 1px solid #52443c; font-size: 0.8em; color: #b3a18b">
+            <span>{{t.meta}}</span>
+            <sc-if value="{{t.hasCourse}}" hint-placeholder-val="{{true}}">
+              <span style="padding: 0.1em 0.6em; border-radius: 20px; background: #6f3811; color: #ffdbc8; font-weight: 700; white-space: nowrap">{{t.course}}</span>
+            </sc-if>
+          </div>
+
+          <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.7em 0.8em; display: flex; flex-direction: column; gap: 0.6em; scrollbar-width: thin; scrollbar-color: #52443c transparent">
+
+            <sc-if value="{{t.hasAllergens}}" hint-placeholder-val="{{false}}">
+              <div role="note" style="display: flex; flex-direction: column; gap: 0.3em; padding: 0.55em 0.65em; border: 2px solid #e08373; border-radius: 12px; background: #3b211b">
+                <div style="display: flex; align-items: center; gap: 0.35em; font-size: 1.05em; font-weight: 800; color: #e08373"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 1.3em">warning</span>Allergi</div>
+                <sc-for list="{{t.allergens}}" as="a" hint-placeholder-count="1">
+                  <div style="font-size: 1.1em; font-weight: 700; line-height: 1.25; color: #ffffff">{{a.text}}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{t.isMessage}}" hint-placeholder-val="{{false}}">
+              <div style="display: flex; gap: 0.5em; align-items: flex-start; font-size: 1.35em; font-weight: 600; line-height: 1.3; color: #ffffff">
+                <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 1.3em; color: #c67139">campaign</span>
+                <span>{{t.message}}</span>
+              </div>
+            </sc-if>
+
+            <sc-for list="{{t.items}}" as="it" hint-placeholder-count="3">
+              <div style="display: flex; flex-direction: column; gap: 0.15em; padding-bottom: 0.45em; border-bottom: 1px solid #3d332d">
+                <div style="display: flex; align-items: baseline; gap: 0.45em; font-size: 1.3em; line-height: 1.2">
+                  <span style="min-width: 1.9em; font-weight: 800; color: #ffffff; font-variant-numeric: tabular-nums">{{it.qty}}</span>
+                  <span style="flex: 1 1 auto; font-weight: 600">{{it.name}}</span>
+                  <sc-if value="{{it.allergy}}" hint-placeholder-val="{{false}}">
+                    <span class="material-symbols-outlined" role="img" aria-label="Allergi" style="font-size: 1em; color: #e08373">warning</span>
+                  </sc-if>
+                </div>
+                <sc-for list="{{it.mods}}" as="m" hint-placeholder-count="1">
+                  <div style="padding-left: 2.9em; font-size: 1.05em; font-weight: 600; line-height: 1.25; color: {{m.color}}">{{m.text}}</div>
+                </sc-for>
+              </div>
+            </sc-for>
+
+            <sc-if value="{{t.hasNote}}" hint-placeholder-val="{{false}}">
+              <div role="note" style="display: flex; gap: 0.4em; align-items: flex-start; padding: 0.55em 0.65em; border-radius: 12px; background: #6f3811; color: #ffdbc8; font-size: 1.1em; font-weight: 600; line-height: 1.25">
+                <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 1.25em">edit_note</span>
+                <span><b>Note:</b> {{t.note}}</span>
+              </div>
+            </sc-if>
+          </div>
+
+          <button onClick="{{t.done}}" style="flex: 0 0 auto; margin: 0 0.8em 0.8em; min-height: 64px; height: 3.1em; border: none; border-radius: 12px; background: #c67139; color: #ffffff; font-family: inherit; font-size: max(17px, 1.05em); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.4em; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 1.3em">check_circle</span>{{t.doneLabel}}</button>
+        </article>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{noTickets}}" hint-placeholder-val="{{false}}">
+    <div style="flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center">
+      <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 72px; color: #6fbfa6">check_circle</span>
+      <p style="margin: 0; font-size: 34px; font-weight: 700">Ingen bonner venter</p>
+      <p style="margin: 0; font-size: 18px; color: #b3a18b">Nye bonner vises her, så snart printeren modtager dem.</p>
+    </div>
+  </sc-if>
+</main>
+
+<footer style="flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #2e251c">
+  <button onClick="{{prev}}" style="height: 64px; min-width: 64px; padding: 0 22px 0 14px; border: none; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; opacity: {{prevOpacity}}"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 34px">{{prevIcon}}</span>Forrige</button>
+  <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+    <span style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums">{{rangeLabel}}<span style="font-weight: 400; color: #b3a18b"> · {{moreLabel}}</span></span>
+    <div aria-hidden="true" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px">
+      <sc-for list="{{dots}}" as="d" hint-placeholder-count="9">
+        <span style="width: 22px; height: 6px; border-radius: 4px; background: {{d.bg}}"></span>
+      </sc-for>
+    </div>
+  </div>
+  <button onClick="{{next}}" style="height: 64px; min-width: 64px; padding: 0 14px 0 22px; border: none; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer; opacity: {{nextOpacity}}">Næste<span class="material-symbols-outlined" aria-hidden="true" style="font-size: 34px">{{nextIcon}}</span></button>
+</footer>
+
+<sc-if value="{{showSnack}}" hint-placeholder-val="{{false}}">
+  <div role="status" style="position: absolute; left: 50%; bottom: 104px; transform: translateX(-50%); max-width: calc(100% - 32px); box-sizing: border-box; display: flex; align-items: center; gap: 20px; padding: 10px 10px 10px 22px; border-radius: 14px; background: #f0dfd7; color: #382e29; font-size: 20px; font-weight: 600">
+    <span>{{snackText}}</span>
+    <button onClick="{{undo}}" style="height: 52px; padding: 0 18px; border: none; border-radius: 12px; background: #c67139; color: #ffffff; font-family: inherit; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">undo</span>Fortryd</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{showRecall}}" hint-placeholder-val="{{false}}">
+  <div style="position: absolute; inset: 0; display: flex; justify-content: flex-end">
+    <button onClick="{{closeRecall}}" aria-label="Luk afsluttede bonner" style="position: absolute; inset: 0; border: none; background: rgba(0, 0, 0, 0.55); cursor: pointer"></button>
+    <section aria-label="Afsluttede bonner" style="position: relative; width: min(560px, 100%); height: 100%; display: flex; flex-direction: column; background: #2b231b; border-left: 1px solid #52443c">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 20px 24px; border-bottom: 1px solid #52443c">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h2 style="margin: 0; font-size: 26px; font-weight: 700; color: #ffffff">Afsluttede bonner</h2>
+          <p style="margin: 0; font-size: 15px; color: #b3a18b">Hent en bon tilbage, hvis den blev fjernet ved en fejl.</p>
+        </div>
+        <button onClick="{{closeRecall}}" aria-label="Luk" style="flex: 0 0 auto; width: 64px; height: 64px; border: none; border-radius: 12px; background: #3d332d; color: #f0dfd7; display: flex; align-items: center; justify-content: center; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 32px">close</span></button>
+      </div>
+      <div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px">
+        <sc-for list="{{done}}" as="d" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 16px; padding: 14px 16px; border: 1px solid #52443c; border-radius: 12px; background: #221b14">
+            <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 24px; font-weight: 800; color: #ffffff">{{d.title}}</span>
+              <span style="font-size: 15px; color: #b3a18b">{{d.sub}}</span>
+              <span style="font-size: 15px; line-height: 1.35">{{d.summary}}</span>
+            </div>
+            <button onClick="{{d.restore}}" style="flex: 0 0 auto; height: 56px; padding: 0 18px; border: none; border-radius: 12px; background: #c67139; color: #ffffff; font-family: inherit; font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">undo</span>Hent tilbage</button>
+          </div>
+        </sc-for>
+        <sc-if value="{{noDone}}" hint-placeholder-val="{{false}}">
+          <p style="margin: 24px 0; font-size: 18px; color: #b3a18b; text-align: center">Ingen afsluttede bonner endnu.</p>
+        </sc-if>
+      </div>
+    </section>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"startZoom":{"editor":"enum","options":["80%","100%","120%","145%","170%"],"default":"100%","section":"Skærm"},"warnMinutes":{"editor":"int","default":10,"min":1,"max":60,"unit":"min","section":"Ventetid"},"lateMinutes":{"editor":"int","default":15,"min":1,"max":90,"unit":"min","section":"Ventetid"},"startRecall":{"editor":"boolean","default":false,"section":"Skærm"},"layout":{"editor":"enum","options":["Automatisk","Liggende","Stående"],"default":"Automatisk","section":"Skærm"},"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var zi = this.zooms().indexOf(props.startZoom || '100%');
+    this.state = {
+      zi: zi < 0 ? 1 : zi,
+      tick: 0,
+      doneIds: ['1039', '1040'],
+      doneAt: { '1039': '18:10', '1040': '18:12' },
+      recall: !!props.startRecall,
+      snackId: null,
+      first: 1,
+      last: 5,
+      tall: typeof window !== 'undefined' && window.innerHeight > window.innerWidth
+    };
+    this.rail = null;
+  }
+
+  isPortrait() {
+    var l = this.props.layout || 'Automatisk';
+    if (l === 'Stående') return true;
+    if (l === 'Liggende') return false;
+    return this.state.tall;
+  }
+
+  zooms() { return ['80%', '100%', '120%', '145%', '170%']; }
+
+  data() {
+    return [
+      { id: '1039', table: '2', guests: 2, waiter: 'Jonas', time: '17:49', mins: 27, course: 'Forret',
+        items: [{ q: 2, name: 'Stegt sild' }, { q: 1, name: 'Rugbrød', mods: ['Ekstra smør'] }] },
+      { id: '1040', table: '14', guests: 5, waiter: 'Sofie', time: '17:52', mins: 24, course: 'Hovedret',
+        items: [{ q: 3, name: 'Hakkebøf', mods: ['Bløde løg'] }, { q: 2, name: 'Flæskesteg' }] },
+      { id: '1041', table: '7', guests: 2, waiter: 'Jonas', time: '17:58', mins: 18, course: 'Forret',
+        items: [{ q: 2, name: 'Rejecocktail' }, { q: 1, name: 'Oksetartar', allergy: true, mods: ['Uden æggeblomme', 'Ekstra kapers'] }],
+        allergens: ['Æg · tartar uden æggeblomme, ren tallerken'] },
+      { id: '1042', table: '12', guests: 4, waiter: 'Mette', time: '18:02', mins: 14, course: 'Hovedret',
+        items: [
+          { q: 2, name: 'Wienerschnitzel', mods: ['1 uden kapers', 'Ekstra smørsauce'] },
+          { q: 1, name: 'Stjerneskud', allergy: true, mods: ['Glutenfrit brød'] },
+          { q: 1, name: 'Børnefrikadeller', mods: ['Kun kartofler, ingen sovs'] }
+        ],
+        allergens: ['Gluten · stjerneskud på glutenfrit brød'],
+        note: 'Børneretten først, gerne hurtigt.' },
+      { id: '1043', table: '5', guests: 2, waiter: 'Mette', time: '18:06', mins: 10, course: 'Hovedret',
+        items: [
+          { q: 2, name: 'Rib-eye 250 g', mods: ['1 rød', '1 medium'] },
+          { q: 2, name: 'Pommes frites' },
+          { q: 1, name: 'Bearnaise', mods: ['Ekstra portion'] }
+        ] },
+      { id: '1044', kind: 'message', waiter: 'Jonas', time: '18:08', mins: 8,
+        message: 'Bord 12: hold hovedretten 10 min. Gæsterne venter på to mere.' },
+      { id: '1045', table: '21', guests: 6, waiter: 'Sofie', time: '18:09', mins: 7, course: 'Forret',
+        items: [
+          { q: 6, name: 'Dagens suppe', allergy: true, mods: ['Plads 3 uden pesto'] },
+          { q: 6, name: 'Hjemmebagt brød' }
+        ],
+        allergens: ['Nødder · plads 3, ingen pesto, ren ske og skål'],
+        note: 'Selskab. Server alle seks samlet.' },
+      { id: '1046', takeaway: 'Hansen', time: '18:11', mins: 5, course: 'Take away',
+        items: [
+          { q: 3, name: 'Burger', mods: ['1 uden løg'] },
+          { q: 3, name: 'Pommes frites' },
+          { q: 1, name: 'Ekstra aioli' }
+        ],
+        note: 'Afhentes kl. 18:35.' },
+      { id: '1047', table: '3', guests: 3, waiter: 'Jonas', time: '18:13', mins: 3, course: 'Hovedret',
+        items: [
+          { q: 1, name: 'Laks', mods: ['Ingen dild'] },
+          { q: 2, name: 'Kyllingebryst' },
+          { q: 3, name: 'Grøn salat' }
+        ] },
+      { id: '1048', table: '9', guests: 2, waiter: 'Sofie', time: '18:14', mins: 2, course: 'Dessert',
+        items: [{ q: 2, name: 'Crème brûlée' }, { q: 1, name: 'Vaniljeis', allergy: true, mods: ['Laktosefri'] }],
+        allergens: ['Laktose · laktosefri is, ingen flødeskum'] },
+      { id: '1049', table: '16', guests: 4, waiter: 'Mette', time: '18:15', mins: 1, course: 'Forret',
+        items: [{ q: 4, name: 'Rejecocktail', mods: ['1 uden dressing'] }] }
+    ];
+  }
+
+  clockText() {
+    var m = 18 * 60 + 16 + this.state.tick;
+    var h = Math.floor(m / 60) % 24, mm = m % 60;
+    return (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+
+  componentDidMount() {
+    var self = this;
+    this.timer = setInterval(function () { self.setState(function (s) { return { tick: s.tick + 1 }; }); }, 60000);
+    this.onResize = function () {
+      var tall = window.innerHeight > window.innerWidth;
+      if (tall !== self.state.tall) self.setState({ tall: tall });
+      self.measure();
+    };
+    window.addEventListener('resize', this.onResize);
+    setTimeout(function () { self.measure(); }, 80);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    clearTimeout(this.snackTimer);
+    window.removeEventListener('resize', this.onResize);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.zi !== this.state.zi || prevState.doneIds !== this.state.doneIds || prevState.tall !== this.state.tall || prevProps.layout !== this.props.layout) {
+      var self = this;
+      setTimeout(function () { self.measure(); }, 40);
+    }
+  }
+
+  stride() {
+    var fs = this.rail ? parseFloat(getComputedStyle(this.rail).fontSize) : 20;
+    return { fs: fs || 20, step: 17.6 * (fs || 20) };
+  }
+
+  measure() {
+    var r = this.rail;
+    if (!r) return;
+    var box = r.getBoundingClientRect();
+    var cards = r.querySelectorAll('article');
+    var first = 0, last = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i].getBoundingClientRect();
+      var seenW = Math.min(c.right, box.right) - Math.max(c.left, box.left);
+      var seenH = Math.min(c.bottom, box.bottom) - Math.max(c.top, box.top);
+      if (seenW > c.width * 0.6 && seenH > Math.min(c.height, box.height) * 0.5) {
+        if (!first) first = i + 1;
+        last = i + 1;
+      }
+    }
+    if (!first) { first = 1; last = Math.min(1, cards.length); }
+    if (first !== this.state.first || last !== this.state.last) this.setState({ first: first, last: last });
+  }
+
+  scrollPage(dir) {
+    var r = this.rail;
+    if (!r) return;
+    if (this.isPortrait()) {
+      r.scrollBy({ top: dir * r.clientHeight * 0.85, behavior: 'smooth' });
+      return;
+    }
+    var st = this.stride();
+    var per = Math.max(1, Math.floor((r.clientWidth - 16) / st.step));
+    r.scrollBy({ left: dir * per * st.step, behavior: 'smooth' });
+  }
+
+  dismiss(id) {
+    var at = this.clockText();
+    var self = this;
+    this.setState(function (s) {
+      var doneAt = Object.assign({}, s.doneAt);
+      doneAt[id] = at;
+      return { doneIds: s.doneIds.filter(function (x) { return x !== id; }).concat([id]), doneAt: doneAt, snackId: id };
+    });
+    clearTimeout(this.snackTimer);
+    this.snackTimer = setTimeout(function () { self.setState({ snackId: null }); }, 8000);
+  }
+
+  restore(id) {
+    this.setState(function (s) {
+      return { doneIds: s.doneIds.filter(function (x) { return x !== id; }), snackId: null };
+    });
+  }
+
+  headOf(d) {
+    if (d.kind === 'message') return { label: 'Besked', value: '', title: 'Besked' };
+    if (d.takeaway) return { label: 'Take away', value: '', title: 'Take away · ' + d.takeaway };
+    return { label: 'Bord', value: d.table, title: 'Bord ' + d.table };
+  }
+
+  renderVals() {
+    var self = this;
+    var s = this.state;
+    var warn = this.props.warnMinutes != null ? this.props.warnMinutes : 10;
+    var late = this.props.lateMinutes != null ? this.props.lateMinutes : 15;
+    var all = this.data();
+    var byId = {};
+    all.forEach(function (d) { byId[d.id] = d; });
+
+    var active = all.filter(function (d) { return s.doneIds.indexOf(d.id) < 0; });
+    this.activeCount = active.length;
+    var n = active.length;
+
+    var toneOf = function (mins) {
+      if (mins >= late) return { color: '#e08373', ink: '#221b14', bg: '#e08373', tone: 'late' };
+      if (mins >= warn) return { color: '#c67139', ink: '#c67139', bg: 'transparent', tone: 'warn' };
+      return { color: '#6fbfa6', ink: '#6fbfa6', bg: 'transparent', tone: 'ok' };
+    };
+
+    var dishCount = 0;
+    var oldest = -1;
+    var tickets = active.map(function (d) {
+      var mins = d.mins + s.tick;
+      var tone = toneOf(mins);
+      var isMsg = d.kind === 'message';
+      var head = self.headOf(d);
+      var items = (d.items || []).map(function (it) {
+        dishCount += it.q;
+        return {
+          qty: it.q + ' ×',
+          name: it.name,
+          allergy: !!it.allergy,
+          mods: (it.mods || []).map(function (m) { return { text: m, color: it.allergy ? '#e08373' : '#ffb68b' }; })
+        };
+      });
+      if (!isMsg && mins > oldest) oldest = mins;
+      var metaParts = ['Bon ' + d.id];
+      if (d.guests) metaParts.push(d.guests + ' pers.');
+      if (d.takeaway) metaParts.push(d.takeaway);
+      if (d.waiter) metaParts.push(d.waiter);
+      metaParts.push(d.time);
+      return {
+        aria: head.title + ', bon ' + d.id + ', ' + mins + ' min',
+        headLabel: head.label,
+        headValue: head.value,
+        meta: metaParts.join(' · '),
+        course: d.course || '',
+        hasCourse: !!d.course,
+        ageText: mins + ' min',
+        ageColor: tone.color,
+        ageInk: tone.ink,
+        ageBg: tone.bg,
+        border: tone.tone === 'late' ? '2px solid #e08373' : (isMsg ? '2px solid #c67139' : '1px solid #52443c'),
+        isMessage: isMsg,
+        message: d.message || '',
+        items: items,
+        allergens: (d.allergens || []).map(function (a) { return { text: a }; }),
+        hasAllergens: !!(d.allergens && d.allergens.length),
+        note: d.note || '',
+        hasNote: !!d.note,
+        doneLabel: isMsg ? 'Læst' : 'Færdig',
+        done: function () { self.dismiss(d.id); }
+      };
+    });
+
+    var first = Math.min(Math.max(1, s.first), Math.max(1, n));
+    var last = Math.min(Math.max(first, s.last), n);
+
+    var done = s.doneIds.slice().reverse().map(function (id) {
+      var d = byId[id];
+      var head = self.headOf(d);
+      var count = (d.items || []).reduce(function (a, it) { return a + it.q; }, 0);
+      var summary = d.kind === 'message' ? d.message : (d.items || []).map(function (it) { return it.q + ' × ' + it.name; }).join(', ');
+      return {
+        title: head.title,
+        sub: 'Bon ' + d.id + (count ? ' · ' + count + ' retter' : '') + ' · færdig ' + (s.doneAt[id] || ''),
+        summary: summary,
+        restore: function () { self.restore(id); }
+      };
+    });
+
+    var snackTicket = s.snackId ? byId[s.snackId] : null;
+    var oldestTone = toneOf(oldest);
+    var zs = this.zooms();
+    var zoom = parseFloat(zs[s.zi]) / 100;
+    var portrait = this.isPortrait();
+
+    return {
+      railDisplay: portrait ? 'grid' : 'flex',
+      railCols: portrait ? 'repeat(auto-fill, minmax(17em, 1fr))' : 'none',
+      railAlign: portrait ? 'start' : 'stretch',
+      railOx: portrait ? 'hidden' : 'auto',
+      railOy: portrait ? 'auto' : 'hidden',
+      railSnap: portrait ? 'y proximity' : 'x mandatory',
+      prevIcon: portrait ? 'expand_less' : 'chevron_left',
+      nextIcon: portrait ? 'expand_more' : 'chevron_right',
+      clock: this.clockText(),
+      waitingCount: n,
+      waitingLabel: n === 1 ? 'bon venter' : 'bonner venter',
+      dishCount: dishCount,
+      hasOldest: oldest >= 0,
+      oldestText: oldest + ' min',
+      oldestColor: oldestTone.color,
+      oldestInk: oldestTone.ink,
+      oldestBg: oldestTone.bg,
+      zoomLabel: zs[s.zi],
+      zoomOutOpacity: s.zi === 0 ? 0.4 : 1,
+      zoomInOpacity: s.zi === zs.length - 1 ? 0.4 : 1,
+      zoomOut: function () { self.setState(function (st) { return { zi: Math.max(0, st.zi - 1) }; }); },
+      zoomIn: function () { self.setState(function (st) { return { zi: Math.min(zs.length - 1, st.zi + 1) }; }); },
+      fontSize: (20 * zoom) + 'px',
+      doneCount: s.doneIds.length,
+      openRecall: function () { self.setState({ recall: true }); },
+      closeRecall: function () { self.setState({ recall: false }); },
+      showRecall: s.recall,
+      tickets: tickets,
+      hasTickets: n > 0,
+      noTickets: n === 0,
+      setRail: function (el) { self.rail = el; },
+      onRailScroll: function () { self.measure(); },
+      prev: function () { self.scrollPage(-1); },
+      next: function () { self.scrollPage(1); },
+      prevOpacity: first <= 1 ? 0.4 : 1,
+      nextOpacity: last >= n ? 0.4 : 1,
+      rangeLabel: n === 0 ? 'Ingen bonner' : 'Viser ' + first + '–' + last + ' af ' + n,
+      moreLabel: n - last > 0 ? (n - last) + (portrait ? ' flere længere nede' : ' flere til højre') : 'alle vises',
+      dots: tickets.map(function (t, i) { return { bg: (i + 1 >= first && i + 1 <= last) ? '#c67139' : '#52443c' }; }),
+      done: done,
+      noDone: done.length === 0,
+      showSnack: !!snackTicket,
+      snackText: snackTicket ? self.headOf(snackTicket).title + ' · bon ' + snackTicket.id + ' er færdig' : '',
+      undo: function () { if (s.snackId) self.restore(s.snackId); }
+    };
+  }
+}
+</script>
+</body>
+</html>

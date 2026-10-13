@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2e251c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Køkkenskærm</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app" class="app">
+
+  <header class="bar top">
+    <div class="brand">
+      <span class="icon brand-icon" data-icon="pot"></span>
+      <div class="brand-text">
+        <h1 id="printer-name">Køkken</h1>
+        <span id="conn" class="conn ok"><span class="icon" data-icon="check"></span><span id="conn-text">Starter…</span></span>
+      </div>
+    </div>
+
+    <div class="counts" role="status" aria-live="polite">
+      <div class="count-main"><span id="waiting-count" class="num-xl">0</span><span id="waiting-label" class="count-label">bonner venter</span></div>
+      <span class="divider" aria-hidden="true"></span>
+      <div class="count-sub"><span id="dish-count" class="num-lg">0</span><span class="muted">retter i alt</span></div>
+      <span id="oldest" class="chip age" hidden><span class="icon" data-icon="clock"></span><span id="oldest-text"></span></span>
+    </div>
+
+    <div class="tools">
+      <button id="sound-unlock" class="btn-outline" type="button" hidden><span class="icon" data-icon="sound"></span>Tryk for lyd</button>
+      <div class="zoom" role="group" aria-label="Tekststørrelse">
+        <button id="zoom-out" type="button" aria-label="Mindre tekst"><span class="zoom-a small">A</span><span class="zoom-sign">−</span></button>
+        <span id="zoom-label" class="zoom-label">100%</span>
+        <button id="zoom-in" type="button" aria-label="Større tekst"><span class="zoom-a big">A</span><span class="zoom-sign">+</span></button>
+      </div>
+      <button id="open-recall" class="btn-outline" type="button"><span class="icon" data-icon="history"></span>Afsluttede<span id="done-count" class="badge">0</span></button>
+      <button id="open-settings" class="btn-square" type="button" aria-label="Opsætning"><span class="icon" data-icon="settings"></span></button>
+      <span id="clock" class="clock">--:--</span>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div id="rail" class="rail" tabindex="-1"></div>
+    <div id="empty" class="empty" hidden>
+      <span class="icon empty-icon" data-icon="check"></span>
+      <p class="empty-title">Ingen bonner venter</p>
+      <p class="muted">Nye bonner vises her, så snart printeren modtager dem.</p>
+    </div>
+  </main>
+
+  <footer class="bar bottom">
+    <button id="prev" class="btn-nav" type="button"><span id="prev-icon" class="icon" data-icon="left"></span>Forrige</button>
+    <div class="range">
+      <span><strong id="range-label">Ingen bonner</strong><span id="more-label" class="muted"></span></span>
+      <div id="dots" class="dots" aria-hidden="true"></div>
+    </div>
+    <button id="next" class="btn-nav" type="button">Næste<span id="next-icon" class="icon" data-icon="right"></span></button>
+  </footer>
+
+  <div id="snack" class="snack" role="status" hidden>
+    <span id="snack-text"></span>
+    <button id="snack-undo" class="btn-accent" type="button"><span class="icon" data-icon="undo"></span>Fortryd</button>
+  </div>
+
+  <div id="recall" class="overlay" hidden>
+    <button class="backdrop" type="button" aria-label="Luk afsluttede bonner" data-close="recall"></button>
+    <section class="drawer" aria-label="Afsluttede bonner">
+      <div class="drawer-head">
+        <div>
+          <h2>Afsluttede bonner</h2>
+          <p class="muted">Hent en bon tilbage, hvis den blev fjernet ved en fejl.</p>
+        </div>
+        <button class="btn-square solid" type="button" aria-label="Luk" data-close="recall"><span class="icon" data-icon="close"></span></button>
+      </div>
+      <div id="done-list" class="drawer-list"></div>
+    </section>
+  </div>
+
+  <div id="settings" class="overlay settings-overlay" hidden>
+    <section class="settings" aria-label="Opsætning">
+      <header class="bar">
+        <div class="brand">
+          <button class="btn-square solid" type="button" aria-label="Tilbage til køkkenskærmen" data-close="settings"><span class="icon" data-icon="back"></span></button>
+          <h1>Opsætning</h1>
+        </div>
+        <span id="listen-chip" class="chip"></span>
+      </header>
+
+      <form id="settings-form" class="settings-body" autocomplete="off">
+        <section class="panel">
+          <div class="panel-head"><span class="icon accent" data-icon="network"></span><h2>Printer-emulering</h2></div>
+          <p class="muted">Skærmen svarer som en kitchen printer. Kassen sender bonner til denne enheds IP-adresse og port, som den ellers ville printe til.</p>
+          <label>Printernavn
+            <input name="printerName" type="text">
+          </label>
+          <div class="grid2">
+            <label>Lyt på adresse
+              <input name="bindAddress" type="text" inputmode="decimal">
+            </label>
+            <label>Port
+              <input name="port" type="number" min="1" max="65535" inputmode="numeric">
+            </label>
+            <label>Protokol
+              <select name="protocol">
+                <option value="escpos">ESC/POS (Epson m.fl.)</option>
+                <option value="star">Star Line</option>
+              </select>
+            </label>
+            <label>Tegnsæt
+              <select name="charset">
+                <option value="auto">Automatisk</option>
+                <option value="cp865">PC865 nordisk</option>
+                <option value="cp850">PC850</option>
+                <option value="cp858">PC858 (med €)</option>
+                <option value="cp1252">Windows-1252</option>
+                <option value="utf8">UTF-8</option>
+                <option value="cp437">PC437</option>
+              </select>
+            </label>
+          </div>
+          <div class="ips">
+            <span class="field-label">Denne enheds IP-adresser</span>
+            <div id="ip-list" class="ip-list"></div>
+            <p class="muted small">Den statiske IP-adresse sættes i styresystemet (se README). Brug 0.0.0.0 for at lytte på alle adresser.</p>
+          </div>
+        </section>
+
+        <div class="col">
+          <section class="panel">
+            <div class="panel-head"><span class="icon accent" data-icon="sliders"></span><h2>Visning</h2></div>
+            <div class="grid3">
+              <label>Tekststørrelse
+                <select name="zoom">
+                  <option>80%</option><option>100%</option><option>120%</option><option>145%</option><option>170%</option><option>200%</option>
+                </select>
+              </label>
+              <label>Gul efter (min)
+                <input name="warnMinutes" type="number" min="1" max="120" inputmode="numeric">
+              </label>
+              <label>Rød efter (min)
+                <input name="lateMinutes" type="number" min="1" max="240" inputmode="numeric">
+              </label>
+              <label>Layout
+                <select name="layout">
+                  <option value="auto">Automatisk</option>
+                  <option value="landscape">Liggende</option>
+                  <option value="portrait">Stående</option>
+                </select>
+              </label>
+              <label>Bonvisning
+                <select name="view">
+                  <option value="parsed">Opdelt</option>
+                  <option value="original">Original bon</option>
+                </select>
+              </label>
+              <label>Gem afsluttede (timer)
+                <input name="keepDoneHours" type="number" min="0" max="48" step="0.5" inputmode="decimal">
+              </label>
+            </div>
+            <label class="toggle"><span><span class="icon" data-icon="sound"></span>Lyd ved ny bon</span><input name="sound" type="checkbox"></label>
+            <label>Allergen-ord (adskilt med komma)
+              <textarea name="allergenWords" rows="3"></textarea>
+            </label>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head"><span class="icon accent" data-icon="receipt"></span><h2>Drift</h2></div>
+            <div class="row-wrap">
+              <button id="btn-test" class="btn-outline" type="button"><span class="icon" data-icon="print"></span>Modtag testbon</button>
+              <button id="btn-fullscreen" class="btn-outline" type="button"><span class="icon" data-icon="fullscreen"></span>Fuld skærm</button>
+              <button id="btn-clear" class="btn-outline danger" type="button"><span class="icon" data-icon="warning"></span>Ryd alle bonner</button>
+            </div>
+            <p id="last-job" class="muted small"></p>
+          </section>
+        </div>
+      </form>
+
+      <footer class="bar settings-foot">
+        <span id="settings-msg" class="muted"></span>
+        <button class="btn-outline" type="button" data-close="settings">Annullér</button>
+        <button id="btn-save" class="btn-accent" type="button"><span class="icon" data-icon="check"></span>Gem</button>
+      </footer>
+    </section>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

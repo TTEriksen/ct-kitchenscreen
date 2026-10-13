@@ -1,0 +1,16 @@
+{
+  "name": "ct-kitchenscreen",
+  "version": "1.0.0",
+  "description": "Køkkenskærm der emulerer en netværks-kitchen printer (ESC/POS / Star, port 9100) og viser bonnerne på en touchskærm.",
+  "main": "server/index.js",
+  "private": true,
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test test/",
+    "send-test": "node tools/send-test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,22 @@
+# systemd service: runs the kitchen screen server at boot.
+# Install (adjust User and paths first):
+#   sudo cp deploy/kitchenscreen.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now kitchenscreen
+
+[Unit]
+Description=CT Kitchenscreen (printer-emulating kitchen display)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/ct-kitchenscreen
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=3
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<title>Opsætning af printer-emulering</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; display: flex; flex-direction: column; background: #221b14; color: #f0dfd7; font-family: Roboto, 'SF Pro Text', system-ui, -apple-system, 'Segoe UI', sans-serif">
+
+<header style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; background: #2e251c; color: #ffffff">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <a href="Main.dc.html" aria-label="Tilbage til køkkenskærmen" style="width: 56px; height: 56px; border-radius: 12px; background: #3d332d; color: #f0dfd7; display: flex; align-items: center; justify-content: center; text-decoration: none"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 30px">arrow_back</span></a>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 700">Opsætning</h1>
+  </div>
+  <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid #6fbfa6; border-radius: 20px; font-size: 15px; font-weight: 600; color: #6fbfa6"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 20px">check_circle</span>Lytter på 192.168.1.50:9100</span>
+</header>
+
+<div style="flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px">
+
+  <section style="display: flex; flex-direction: column; gap: 18px; padding: 24px; border-radius: 14px; background: #2b231b">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 26px; color: #c67139">lan</span>
+      <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #ffffff">Netværk</h2>
+    </div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.4; color: #b3a18b">Skærmen svarer som en kitchen printer. Kassen sender bonner til den samme IP-adresse og port, som den ellers ville printe til.</p>
+
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Printernavn i kassen
+      <input type="text" value="Køkkenprinter 1" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px">
+    </label>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Statisk IP-adresse
+        <input type="text" inputmode="decimal" value="192.168.1.50" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 2px solid #c67139; border-radius: 12px; background: #3d332d; color: #ffffff; font-family: inherit; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Port
+        <input type="text" inputmode="numeric" value="9100" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Subnetmaske
+        <input type="text" inputmode="decimal" value="255.255.255.0" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px; font-variant-numeric: tabular-nums">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Gateway
+        <input type="text" inputmode="decimal" value="192.168.1.1" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px; font-variant-numeric: tabular-nums">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Protokol
+        <select style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px">
+          <option selected>ESC/POS (RAW)</option>
+          <option>Star Line</option>
+        </select>
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Tegnsæt
+        <select style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px">
+          <option selected>PC865 nordisk</option>
+          <option>UTF-8</option>
+          <option>Windows-1252</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0">
+    <section style="display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 14px; background: #2b231b">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span class="material-symbols-outlined" aria-hidden="true" style="font-size: 26px; color: #c67139">tune</span>
+        <h2 style="margin: 0; font-size: 22px; font-weight: 600; color: #ffffff">Visning</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Tekststørrelse
+          <select style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px">
+            <option>80 %</option>
+            <option selected>100 %</option>
+            <option>120 %</option>
+            <option>145 %</option>
+            <option>170 %</option>
+          </select>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Gul efter
+          <input type="text" inputmode="numeric" value="10 min" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px">
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600">Rød efter
+          <input type="text" inputmode="numeric" value="15 min" style="height: 56px; padding: 0 14px; box-sizing: border-box; border: 1px solid #9f8d84; border-radius: 12px; background: #3d332d; color: #f0dfd7; font-family: inherit; font-size: 20px">
+        </label>
+      </div>
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 0 16px; border: 1px solid #52443c; border-radius: 12px; font-size: 18px; font-weight: 600">
+        <span style="display: flex; align-items: center; gap: 10px"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">notifications_active</span>Lyd ved ny bon</span>
+        <input type="checkbox" checked style="width: 28px; height: 28px; accent-color: #c67139">
+      </label>
+      <label style="display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 0 16px; border: 1px solid #52443c; border-radius: 12px; font-size: 18px; font-weight: 600">
+        <span style="display: flex; align-items: center; gap: 10px"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">history</span>Gem afsluttede bonner i 2 timer</span>
+        <input type="checkbox" checked style="width: 28px; height: 28px; accent-color: #c67139">
+      </label>
+    </section>
+
+    <section style="flex: 1 1 auto; display: flex; flex-direction: column; gap: 10px; padding: 20px 24px; border-radius: 14px; background: #2b231b">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 500; color: #b3a18b">Sidste bon modtaget</h2>
+      <pre style="flex: 1 1 auto; margin: 0; padding: 12px 14px; border-radius: 12px; background: #221b14; color: #f0dfd7; font-family: ui-monospace, 'Droid Sans Mono', Menlo, Consolas, monospace; font-size: 14px; line-height: 1.35; overflow: hidden">18:15  BON 1049   BORD 16   4 PERS.
+TJENER: Mette        FORRET
+4 x Rejecocktail
+    1 uden dressing</pre>
+    </section>
+  </div>
+</div>
+
+<footer style="display: flex; justify-content: flex-end; gap: 12px; padding: 12px 16px; background: #2e251c">
+  <button type="button" style="height: 56px; padding: 0 22px; border: 1px solid #9f8d84; border-radius: 12px; background: transparent; color: #f0dfd7; font-family: inherit; font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">print</span>Modtag testbon</button>
+  <button type="button" style="height: 56px; padding: 0 28px; border: none; border-radius: 12px; background: #c67139; color: #ffffff; font-family: inherit; font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer"><span class="material-symbols-outlined" aria-hidden="true" style="font-size: 24px">check</span>Gem</button>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
