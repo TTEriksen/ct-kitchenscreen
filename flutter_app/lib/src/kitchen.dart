@@ -8,7 +8,17 @@ import 'package:flutter/foundation.dart';
 import 'models.dart';
 import 'printer/escpos.dart';
 import 'printer/parser.dart';
+import 'printer/print_out.dart';
 import 'printer/samples.dart';
+
+/// The result of the last print on the physical printer.
+class PrintResult {
+  const PrintResult({required this.ok, required this.at, required this.what, this.error});
+  final bool ok;
+  final DateTime at;
+  final String what;
+  final String? error;
+}
 
 class PrinterStatus {
   const PrinterStatus({this.listening = false, this.port, this.error, this.lastJobAt, this.jobs = 0});
@@ -45,6 +55,12 @@ class Kitchen extends ChangeNotifier {
   Timer? _purgeTimer;
   final _arrivals = StreamController<Ticket>.broadcast();
 
+  /// The venue's own top-bar logo, one for dark and one for light mode (either may be missing).
+  PrintResult? lastPrint;
+
+  Uint8List? logoDark;
+  Uint8List? logoLight;
+
   /// New tickets as they arrive (for the chime).
   Stream<Ticket> get arrivals => _arrivals.stream;
 
@@ -70,6 +86,7 @@ class Kitchen extends ChangeNotifier {
 
   File get _ticketsFile => File('${_dir.path}/tickets.json');
   File get _settingsFile => File('${_dir.path}/settings.json');
+  File _logoFile(bool dark) => File('${_dir.path}/logo_${dark ? 'dark' : 'light'}.img');
 
   Future<void> _load() async {
     try {
@@ -77,6 +94,19 @@ class Kitchen extends ChangeNotifier {
         settings = Settings.fromJson(jsonDecode(await _settingsFile.readAsString()) as Map<String, dynamic>);
       }
     } catch (_) {/* keep defaults */}
+    for (final dark in [true, false]) {
+      try {
+        final f = _logoFile(dark);
+        if (await f.exists()) {
+          final b = await f.readAsBytes();
+          if (dark) {
+            logoDark = b;
+          } else {
+            logoLight = b;
+          }
+        }
+      } catch (_) {/* no logo */}
+    }
     try {
       if (await _ticketsFile.exists()) {
         final j = jsonDecode(await _ticketsFile.readAsString()) as Map<String, dynamic>;
@@ -129,6 +159,28 @@ class Kitchen extends ChangeNotifier {
       _save();
       notifyListeners();
     }
+  }
+
+  /// Stores (or with null removes) the venue logo for dark or light mode.
+  Future<void> setLogo({required bool dark, required Uint8List? bytes}) async {
+    final f = _logoFile(dark);
+    if (bytes == null) {
+      if (await f.exists()) await f.delete();
+    } else {
+      await f.writeAsBytes(bytes, flush: true);
+    }
+    if (dark) {
+      logoDark = bytes;
+    } else {
+      logoLight = bytes;
+    }
+    notifyListeners();
+  }
+
+  /// The venue logo to show in [dark] or light mode, or null to show CTpos.
+  Uint8List? venueLogo(bool dark) {
+    if (settings.logo != 'custom') return null;
+    return dark ? (logoDark ?? logoLight) : (logoLight ?? logoDark);
   }
 
   Future<void> saveSettings(Settings next) async {
@@ -218,6 +270,9 @@ class Kitchen extends ChangeNotifier {
       );
       _tickets.add(t);
       _arrivals.add(t);
+      if (settings.printerEnabled && settings.autoPrint) {
+        unawaited(_print(ticketBytes(lines), 'Bon ${t.number}'));
+      }
     }
     if (pages.isNotEmpty) {
       status = status.copyWith(lastJobAt: DateTime.now(), jobs: status.jobs + pages.length);
@@ -228,6 +283,44 @@ class Kitchen extends ChangeNotifier {
   }
 
   void sendTestTicket() => ingest(nextSample());
+
+  // ---------- Physical printer ----------
+
+  /// Prints a copy of [t] (headed "KOPI hh:mm") on the printer set up in settings.
+  Future<PrintResult> printTicket(Ticket t) {
+    final now = DateTime.now();
+    final hm = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    return _print(ticketBytes(t.lines, copy: 'KOPI $hm'), 'Bon ${t.number}');
+  }
+
+  Future<PrintResult> testPrint(Settings s) => _print(testPageBytes(s.printerName), 'Testudskrift', s);
+
+  /// True when host:port is this tablet's own emulated printer, which would print in a loop.
+  bool _isSelf(String host, int port) {
+    if (port != settings.port) return false;
+    final h = host.trim().toLowerCase();
+    if (h == 'localhost' || h.startsWith('127.') || h == '::1' || h == '0.0.0.0') return true;
+    return ips.any((i) => i.address == h);
+  }
+
+  Future<PrintResult> _print(List<int> bytes, String what, [Settings? using]) async {
+    final s = using ?? settings;
+    final host = s.printerHost.trim();
+    PrintResult r;
+    try {
+      if (host.isEmpty) throw PrintError('Ingen printer valgt. Indtast printerens IP-adresse under Opsætning.');
+      if (_isSelf(host, s.printerPort)) {
+        throw PrintError('Printeradressen peger på denne skærm selv. Vælg den rigtige printers IP-adresse.');
+      }
+      await sendToPrinter(host, s.printerPort, bytes);
+      r = PrintResult(ok: true, at: DateTime.now(), what: what);
+    } catch (e) {
+      r = PrintResult(ok: false, at: DateTime.now(), what: what, error: '$e');
+    }
+    lastPrint = r;
+    notifyListeners();
+    return r;
+  }
 
   Future<void> refreshIps() async {
     try {

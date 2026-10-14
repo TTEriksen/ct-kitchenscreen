@@ -184,6 +184,11 @@ class Settings {
     this.keepDoneHours = 2,
     this.idleFlushMs = 800,
     this.themeMode = 'dark',
+    this.logo = 'ctpos',
+    this.printerEnabled = false,
+    this.printerHost = '',
+    this.printerPort = 9100,
+    this.autoPrint = false,
     this.palette = 'ctpos',
     this.customAccent = 0xFFED1C24,
     this.customNeutralHue = 0,
@@ -204,6 +209,11 @@ class Settings {
   double keepDoneHours;
   int idleFlushMs;
   String themeMode; // 'dark' | 'light' | 'auto'
+  bool printerEnabled; // a physical network printer to print tickets on
+  String printerHost;
+  int printerPort;
+  bool autoPrint; // print every incoming ticket as well as showing it
+  String logo; // top-bar logo: 'ctpos' | 'custom' (the venue's own; app icon stays CTpos)
   String palette; // a preset id or 'custom'
   int customAccent; // ARGB
   double customNeutralHue; // 0–360
@@ -235,6 +245,11 @@ class Settings {
         'keepDoneHours': keepDoneHours,
         'idleFlushMs': idleFlushMs,
         'themeMode': themeMode,
+        'logo': logo,
+        'printerEnabled': printerEnabled,
+        'printerHost': printerHost,
+        'printerPort': printerPort,
+        'autoPrint': autoPrint,
         'palette': palette,
         'customAccent': customAccent,
         'customNeutralHue': customNeutralHue,
@@ -258,6 +273,11 @@ class Settings {
       keepDoneHours: (j['keepDoneHours'] as num?)?.toDouble() ?? d.keepDoneHours,
       idleFlushMs: (j['idleFlushMs'] as num?)?.toInt() ?? d.idleFlushMs,
       themeMode: j['themeMode'] as String? ?? d.themeMode,
+      logo: j['logo'] as String? ?? d.logo,
+      printerEnabled: j['printerEnabled'] as bool? ?? d.printerEnabled,
+      printerHost: j['printerHost'] as String? ?? d.printerHost,
+      printerPort: (j['printerPort'] as num?)?.toInt() ?? d.printerPort,
+      autoPrint: j['autoPrint'] as bool? ?? d.autoPrint,
       palette: j['palette'] as String? ?? d.palette,
       customAccent: (j['customAccent'] as num?)?.toInt() ?? d.customAccent,
       customNeutralHue: (j['customNeutralHue'] as num?)?.toDouble() ?? d.customNeutralHue,

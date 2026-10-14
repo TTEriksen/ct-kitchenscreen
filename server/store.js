@@ -20,6 +20,11 @@ const DEFAULT_SETTINGS = {
   keepDoneHours: 2,
   idleFlushMs: 800,
   themeMode: 'dark', // 'dark' | 'light' | 'auto'
+  logo: 'ctpos', // top-bar logo: 'ctpos' | 'custom' (the venue's own; app icon stays CTpos)
+  printerEnabled: false, // a physical network printer to print tickets on
+  printerHost: '',
+  printerPort: 9100,
+  autoPrint: false, // print every incoming ticket as well as showing it
   palette: 'ctpos', // 'ctpos' | 'brasserie' | 'hav' | 'skov' | 'kontrast' | 'custom'
   customAccent: '#ED1C24',
   customNeutralHue: 0,
@@ -122,9 +127,12 @@ class Store {
     }
     if (!/^#[0-9a-fA-F]{6}$/.test(next.customAccent)) next.customAccent = DEFAULT_SETTINGS.customAccent;
     if (!['dark', 'light', 'auto'].includes(next.themeMode)) next.themeMode = DEFAULT_SETTINGS.themeMode;
+    if (!['ctpos', 'custom'].includes(next.logo)) next.logo = DEFAULT_SETTINGS.logo;
     next.customNeutralHue = Math.min(360, Math.max(0, next.customNeutralHue));
     next.customNeutralTint = Math.min(0.4, Math.max(0, next.customNeutralTint));
     if (next.port < 1 || next.port > 65535) next.port = DEFAULT_SETTINGS.port;
+    if (next.printerPort < 1 || next.printerPort > 65535) next.printerPort = DEFAULT_SETTINGS.printerPort;
+    if (!/^[A-Za-z0-9.:-]{0,253}$/.test(next.printerHost)) next.printerHost = '';
     if (next.webPort < 1 || next.webPort > 65535) next.webPort = DEFAULT_SETTINGS.webPort;
     const old = this.settings;
     this.settings = next;

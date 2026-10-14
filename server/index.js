@@ -7,6 +7,7 @@ const path = require('path');
 const { Store } = require('./store');
 const { PrinterEmulator } = require('./printer');
 const { nextSample } = require('./samples');
+const print = require('./print');
 
 const ROOT = path.join(__dirname, '..');
 const PUBLIC = path.join(ROOT, 'public');
@@ -24,7 +25,64 @@ const clients = new Set();
 
 function state() {
   const { active, done } = store.snapshot();
-  return { active, done, settings: store.settings, status: { ...printer.status, ips: localIps() }, serverTime: new Date().toISOString() };
+  return {
+    active,
+    done,
+    settings: store.settings,
+    logos: logoInfo(),
+    lastPrint,
+    status: { ...printer.status, ips: localIps() },
+    serverTime: new Date().toISOString(),
+  };
+}
+
+// ---------- Venue logo (top bar only; the app icon stays CTpos) ----------
+// One image for dark mode and one for light mode, kept in the data folder.
+const LOGO_TYPES = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+let logoVersion = Date.now();
+
+/** Recognises an image by its first bytes, so a renamed file of another kind is refused. */
+function imageKind(buf) {
+  if (buf.length > 8 && buf.readUInt32BE(0) === 0x89504e47) return 'png';
+  if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.length > 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'webp';
+  if (buf.length > 6 && buf.toString('ascii', 0, 4) === 'GIF8') return 'gif';
+  return null;
+}
+
+function logoFile(mode) {
+  for (const ext of Object.keys(LOGO_TYPES)) {
+    const f = path.join(DATA, `logo-${mode}.${ext}`);
+    if (fs.existsSync(f)) return { file: f, type: LOGO_TYPES[ext] };
+  }
+  return null;
+}
+
+function removeLogo(mode) {
+  for (const ext of Object.keys(LOGO_TYPES)) {
+    const f = path.join(DATA, `logo-${mode}.${ext}`);
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+  }
+}
+
+function logoInfo() {
+  return { dark: !!logoFile('dark'), light: !!logoFile('light'), version: logoVersion };
+}
+
+function readRaw(req, limit) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > limit) {
+        reject(new Error('too large'));
+        req.destroy();
+      } else chunks.push(c);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
 }
 
 let broadcastTimer = null;
@@ -36,7 +94,42 @@ function broadcast() {
   }, 30);
 }
 
+// ---------- Physical printer ----------
+let lastPrint = null; // { ok, at, error, what }
+
+/** True when host:port is this device's own emulated printer, which would print in a loop. */
+function isSelf(host, port) {
+  if (port !== store.settings.port) return false;
+  const h = String(host).trim().toLowerCase();
+  if (h === 'localhost' || h.startsWith('127.') || h === '::1' || h === '0.0.0.0') return true;
+  return localIps().some((i) => i.address === h);
+}
+
+async function printBytes(bytes, what) {
+  const s = store.settings;
+  const host = String(s.printerHost || '').trim();
+  try {
+    if (!host) throw new Error('Ingen printer valgt. Indtast printerens IP-adresse under Opsætning.');
+    if (isSelf(host, s.printerPort)) throw new Error('Printeradressen peger på denne skærm selv. Vælg den rigtige printers IP-adresse.');
+    await print.send(host, s.printerPort, bytes);
+    lastPrint = { ok: true, at: new Date().toISOString(), what };
+  } catch (err) {
+    lastPrint = { ok: false, at: new Date().toISOString(), what, error: err.message };
+    console.error('[print] ' + err.message);
+  }
+  broadcast();
+  return lastPrint;
+}
+
+function hhmmNow() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
 store.onChange((kind, payload) => {
+  if (kind === 'added' && store.settings.printerEnabled && store.settings.autoPrint) {
+    printBytes(print.ticketBytes(payload.lines || []), 'Bon ' + (payload.orderNo || payload.seq));
+  }
   if (kind === 'settings') {
     const { old, next } = payload;
     if (old.port !== next.port || old.bindAddress !== next.bindAddress) printer.restart();
@@ -141,6 +234,19 @@ const server = http.createServer(async (req, res) => {
     return t ? sendJson(res, 200, t) : sendJson(res, 404, { error: 'Bonnen findes ikke' });
   }
 
+  const pm = p.match(/^\/api\/tickets\/([^/]+)\/print$/);
+  if (pm && req.method === 'POST') {
+    const t = store.tickets.find((x) => x.id === decodeURIComponent(pm[1]));
+    if (!t) return sendJson(res, 404, { error: 'Bonnen findes ikke' });
+    const r = await printBytes(print.ticketBytes(t.lines || [], { copy: 'KOPI ' + hhmmNow() }), 'Bon ' + (t.orderNo || t.seq));
+    return sendJson(res, r.ok ? 200 : 502, r);
+  }
+
+  if (p === '/api/printer/test' && req.method === 'POST') {
+    const r = await printBytes(print.testPageBytes(store.settings.printerName), 'Testudskrift');
+    return sendJson(res, r.ok ? 200 : 502, r);
+  }
+
   if (p === '/api/tickets' && req.method === 'DELETE') {
     store.clearAll();
     return sendJson(res, 200, { ok: true });
@@ -149,6 +255,38 @@ const server = http.createServer(async (req, res) => {
   if (p === '/api/test' && req.method === 'POST') {
     const added = printer.ingest(nextSample(), 'test');
     return sendJson(res, 200, { added: added.length });
+  }
+
+  const lm = p.match(/^\/api\/logo\/(dark|light)$/);
+  if (lm) {
+    const mode = lm[1];
+    if (req.method === 'GET') {
+      const l = logoFile(mode);
+      if (!l) return sendJson(res, 404, { error: 'Intet logo' });
+      res.writeHead(200, { 'Content-Type': l.type, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
+      return fs.createReadStream(l.file).pipe(res);
+    }
+    if (req.method === 'PUT') {
+      let buf;
+      try {
+        buf = await readRaw(req, 2 * 1024 * 1024);
+      } catch {
+        return sendJson(res, 413, { error: 'Billedet er for stort. Højst 2 MB.' });
+      }
+      const kind = imageKind(buf);
+      if (!kind) return sendJson(res, 415, { error: 'Vælg en PNG, JPG, WebP eller GIF.' });
+      removeLogo(mode);
+      fs.writeFileSync(path.join(DATA, `logo-${mode}.${kind}`), buf);
+      logoVersion = Date.now();
+      broadcast();
+      return sendJson(res, 200, logoInfo());
+    }
+    if (req.method === 'DELETE') {
+      removeLogo(mode);
+      logoVersion = Date.now();
+      broadcast();
+      return sendJson(res, 200, logoInfo());
+    }
   }
 
   if (p === '/api/settings' && req.method === 'GET') return sendJson(res, 200, store.settings);

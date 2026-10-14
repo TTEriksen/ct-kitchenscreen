@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Vælg et billede af jeres logo til køkkenskærmens topbjælke.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Køkkenskærmen modtager bonner fra kassen over det lokale netværk.</string>
 	<key>UIRequiresFullScreen</key>

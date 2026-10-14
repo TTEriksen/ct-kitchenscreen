@@ -10,6 +10,9 @@ It does the same as the browser version in the repository root:
 - **Layout:** landscape shows tickets side by side, and portrait shows a grid that scrolls up and down.
 - **Kiosk behaviour:** a chime on new tickets, full screen, and the screen kept on. Tickets are saved on the tablet, so a restart loses nothing.
 - **Colours:** Settings › Farver has dark, light or automatic, five palettes plus your own accent and background tone, with a live preview of both modes and their contrast ratios. Colours are calculated in `lib/src/ui/palette.dart` (same maths as the web version's `public/palette.js`).
+- **Tap to enlarge:** tap a ticket to see it large, with the original printout and details beside it; tap again to make it small.
+- **Physical printer:** Settings › Fysisk printer prints tickets on a real network printer (ESC/POS, port 9100): Print in the large view, optional automatic printing of every new ticket, and a test print.
+- **Own logo:** Settings › Logo i topbjælken replaces the CTpos wordmark in the top bar and on the empty screen with the venue's logo from the tablet's photos: one image for dark mode, one for light mode, or one for both. The app icon and start screen stay CTpos.
 
 ## Connecting the till
 
@@ -72,6 +75,7 @@ lib/src/printer/escpos.dart   ESC/POS and Star Line decoder, status replies
 lib/src/printer/codepages.dart PC865, PC850, PC858, PC437, Windows-1252, UTF-8
 lib/src/printer/parser.dart   reads table, guests, items, modifiers, allergens, notes
 lib/src/printer/samples.dart  test tickets
+lib/src/printer/print_out.dart printing on a physical network printer
 lib/src/ui/                   kitchen screen, ticket card, settings, colour palettes (CTpos design system)
 test/widget_test.dart         decoder and parser tests
 ```

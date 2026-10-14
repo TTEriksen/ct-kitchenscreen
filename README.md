@@ -16,6 +16,10 @@ A kitchen display that pretends to be a network kitchen printer. Point the till'
 
 - **Colours**: Settings › Farver has Mørk / Lys / Automatisk (follows the screen's own setting), five palettes (CTpos, Brasserie, Hav, Skov, Høj kontrast) and Egen, where you pick an accent colour and a background tone. Every other colour is calculated for both light and dark mode and adjusted until text, buttons, allergens and status colours reach at least 4.5:1 contrast. With a red accent, modifiers and notes switch to blue so they never look like allergens.
 
+- **Tap to enlarge**: tap a ticket to see it large in the middle of the screen, with the original printout beside it and its details (time received, ticket number, where it came from). Tap again to make it small.
+- **Physical printer**: Settings › Fysisk printer sends tickets to a real network printer (ESC/POS on port 9100, e.g. Epson or Star): a Print button in the large view, optional automatic printing of every new ticket, and a test print. Reprints are headed KOPI. The screen refuses its own address, so it can't print to itself in a loop.
+- **Own logo**: Settings › Logo i topbjælken can replace the CTpos wordmark in the top bar (and on the empty screen) with the venue's own logo: one image for dark mode and one for light mode, or a single image used in both. PNG, JPG, WebP or GIF up to 2 MB. The app icon and browser tab icon stay CTpos.
+
 The screen text is in Danish. Logo, icons and default colours come from the CTpos design system.
 
 There is also a native **iPad and Android tablet app** in [`flutter_app/`](flutter_app/README.md). The tablet itself is the printer, so no server is needed.
@@ -126,6 +130,7 @@ server/
   codepages.js   PC865, PC850, PC858, PC437, Windows-1252, ESC R national sets, UTF-8
   parser.js      text lines → table, guests, items, modifiers, allergens, notes
   store.js       tickets and settings, saved to data/
+  print.js       prints tickets on a physical network printer (ESC/POS)
   samples.js     sample tickets for testing
 public/          the screen (plain HTML, CSS and JavaScript)
 tools/send-test.js   sends tickets to a screen over TCP, like a till
@@ -144,6 +149,9 @@ design/          the design canvas the screen is built from
 | `POST /api/tickets/:id/restore` | Bring a finished ticket back |
 | `DELETE /api/tickets` | Remove all tickets |
 | `POST /api/test` | Add a sample ticket |
+| `POST /api/tickets/:id/print` | Print a copy of a ticket on the physical printer |
+| `POST /api/printer/test` | Print a test page on the physical printer |
 | `GET` / `PUT /api/settings` | Read or change settings |
+| `GET` / `PUT` / `DELETE /api/logo/dark` (or `light`) | The venue's own top-bar logo; `PUT` takes the raw image (PNG, JPG, WebP or GIF, max 2 MB) |
 
 The API has no login, so keep the device on the restaurant's internal network.

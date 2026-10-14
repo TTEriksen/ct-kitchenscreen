@@ -24,6 +24,9 @@
     print: P('<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>'),
     sound: P('<path d="M4 9.5v5h4l5 4v-13l-5 4z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 6.5a7.5 7.5 0 0 1 0 11"/>'),
     fullscreen: P('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+    image: P('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>'),
+    upload: P('<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/>'),
+    trash: P('<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/>'),
     palette: P('<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1.1.2-2.2 1.4-2.2H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
     network: P('<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>'),
   };
@@ -135,11 +138,11 @@
     return `<pre class="raw">${lines.join('\n')}</pre>`;
   }
 
-  function ticketHtml(t, fresh) {
+  function ticketHtml(t, fresh, expanded) {
     const mins = minutesSince(t.receivedAt);
     const tone = toneOf(mins);
     const head = headOf(t);
-    const showRaw = S.settings && S.settings.view === 'original' ? !S.rawOpen.has(t.id) : S.rawOpen.has(t.id);
+    const showRaw = !expanded && (S.settings && S.settings.view === 'original' ? !S.rawOpen.has(t.id) : S.rawOpen.has(t.id));
     const courses = (t.sections || []).filter((s) => s.course);
     const onePill = (t.sections || []).length === 1 && courses.length === 1 ? courses[0].course : (t.table && t.takeaway ? t.takeaway : '');
     const cls = ['ticket', tone === 'late' && 'late', t.isMessage && 'is-message', fresh && 'fresh'].filter(Boolean).join(' ');
@@ -170,7 +173,31 @@
       for (const x of t.extra || []) body += `<div class="extra">${esc(x)}</div>`;
     }
 
-    return `<article class="${cls}" data-id="${esc(t.id)}" aria-label="${esc(head.title + ', ' + mins + ' min')}">
+    if (expanded) {
+      // Wide view: the ticket and the original printout side by side, plus details.
+      const received = new Date(t.receivedAt);
+      const details = [
+        ['Modtaget', received.toLocaleDateString('da-DK') + ' kl. ' + hhmm(received)],
+        ['Bon', t.orderNo || t.seq],
+        t.guests ? ['Gæster', t.guests] : null,
+        t.waiter ? ['Tjener', t.waiter] : null,
+        ['Fra', t.from === 'test' ? 'Testbon' : t.from || 'ukendt'],
+      ].filter(Boolean);
+      body = `<div class="wide-cols"><div class="wide-main">${body}</div><aside class="wide-side">
+          <div class="field-label">Original bon</div>${rawHtml(t)}
+          <dl class="details">${details.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+        </aside></div>`;
+    }
+    const printer = S.settings && S.settings.printerEnabled;
+    const footer = expanded
+      ? `<div class="wide-actions">
+          <button class="btn-done" type="button" data-done="${esc(t.id)}">${icon('check')}${t.isMessage ? 'Læst' : 'Færdig'}</button>
+          ${printer ? `<button class="btn-print" type="button" data-print="${esc(t.id)}">${icon('print')}Print</button>` : ''}
+        </div>
+        <p class="wide-hint">Tryk på bonnen igen for at gøre den lille</p>`
+      : `<button class="btn-done" type="button" data-done="${esc(t.id)}">${icon('check')}${t.isMessage ? 'Læst' : 'Færdig'}</button>`;
+
+    return `<article class="${cls}${expanded ? ' expanded' : ''}" data-id="${esc(t.id)}" aria-label="${esc(head.title + ', ' + mins + ' min')}">
       <div class="t-head">
         <div class="t-title"><span class="t-label">${esc(head.label)}</span><span class="t-num">${esc(head.value)}</span></div>
         <span class="t-age tone-${tone}" data-age="${esc(t.receivedAt)}">${icon('clock')}<span>${mins} min</span></span>
@@ -178,10 +205,10 @@
       <div class="t-meta">
         <span class="t-meta-text">${esc(metaOf(t))}</span>
         <span class="t-meta-right">${onePill ? `<span class="pill">${esc(onePill)}</span>` : ''}
-          <button class="btn-raw" type="button" data-raw="${esc(t.id)}" aria-pressed="${showRaw}" aria-label="Vis original bon">${ICONS.receipt}</button></span>
+          ${expanded ? '' : `<button class="btn-raw" type="button" data-raw="${esc(t.id)}" aria-pressed="${showRaw}" aria-label="Vis original bon">${ICONS.receipt}</button>`}</span>
       </div>
       <div class="t-body">${body}</div>
-      <button class="btn-done" type="button" data-done="${esc(t.id)}">${icon('check')}${t.isMessage ? 'Læst' : 'Færdig'}</button>
+      ${footer}
     </article>`;
   }
 
@@ -322,8 +349,60 @@
       if (S.rawOpen.has(id)) S.rawOpen.delete(id);
       else S.rawOpen.add(id);
       render();
+      return;
     }
+    // A tap anywhere else on a ticket opens it large.
+    const card = e.target.closest('.ticket');
+    if (card && !e.target.closest('button, a, input')) openFocus(card.getAttribute('data-id'));
   });
+
+  // ---------- Enlarged ticket ----------
+  function openFocus(id) {
+    S.focusId = id;
+    renderFocus();
+  }
+  function closeFocus() {
+    S.focusId = null;
+    $('focus').hidden = true;
+  }
+  function renderFocus() {
+    const t = S.focusId && S.active.find((x) => x.id === S.focusId);
+    if (!t) return closeFocus();
+    $('focus-card').innerHTML = ticketHtml(t, false, true);
+    $('focus').hidden = false;
+  }
+  $('focus').addEventListener('click', async (e) => {
+    const done = e.target.closest('[data-done]');
+    if (done) {
+      const t = S.active.find((x) => x.id === done.getAttribute('data-done'));
+      closeFocus();
+      try {
+        await post('/api/tickets/' + encodeURIComponent(done.getAttribute('data-done')) + '/done');
+        if (t) showSnack(t);
+      } catch {
+        flash('Kunne ikke afslutte bonnen. Prøv igen.');
+      }
+      return;
+    }
+    const pr = e.target.closest('[data-print]');
+    if (pr) return printTicket(pr.getAttribute('data-print'), pr);
+    // Any other tap, on the ticket or beside it, makes it small again.
+    closeFocus();
+  });
+
+  async function printTicket(id, btn) {
+    const t = S.active.find((x) => x.id === id) || S.done.find((x) => x.id === id);
+    if (btn) btn.disabled = true;
+    try {
+      const r = await fetch('/api/tickets/' + encodeURIComponent(id) + '/print', { method: 'POST' });
+      const j = await r.json();
+      flash(j.ok ? `${t ? headOf(t).title + ' · ' : ''}sendt til printeren` : j.error || 'Kunne ikke printe');
+    } catch {
+      flash('Kunne ikke printe. Tjek forbindelsen.');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
 
   async function restore(id) {
     try {
@@ -465,7 +544,11 @@
   $('open-settings').addEventListener('click', () => {
     fillSettings();
     S.colors = pickColors(S.settings);
+    S.logoChoice = S.settings.logo || 'ctpos';
+    renderPrintStatus();
+    logoDraft = {};
     renderColors();
+    renderLogoSettings();
     $('settings-msg').textContent = '';
     $('settings').hidden = false;
   });
@@ -479,9 +562,103 @@
   /** Paints the page in a palette and swaps the logo to the version that reads on it. */
   function applyTheme(colors) {
     const p = PAL.apply(colors);
-    const logo = p.dark ? 'ctpos_reversed.png' : 'ctpos_color.png';
-    document.querySelectorAll('.brand-logo, .brand-swap').forEach((img) => { if (!img.src.endsWith(logo)) img.src = logo; });
+    const venue = venueLogoUrl(p.dark);
+    const logo = venue || (p.dark ? 'ctpos_reversed.png' : 'ctpos_color.png');
+    document.querySelectorAll('.brand-logo, .brand-swap').forEach((img) => {
+      if (img.getAttribute('src') !== logo) img.setAttribute('src', logo);
+      img.alt = venue ? 'Logo' : 'CTpos';
+      img.classList.toggle('venue-logo', !!venue);
+    });
     return p;
+  }
+
+  /** The venue's own logo for dark or light mode (or the other one if only one exists), else null. */
+  function venueLogoUrl(dark) {
+    const l = S.logos;
+    if (!S.settings || S.settings.logo !== 'custom' || !l) return null;
+    const mode = dark ? (l.dark ? 'dark' : l.light ? 'light' : null) : (l.light ? 'light' : l.dark ? 'dark' : null);
+    return mode ? `/api/logo/${mode}?v=${l.version}` : null;
+  }
+
+  // ---------- Logo settings ----------
+  // Picked images wait here until Gem: { dark: File | 'remove' | undefined, light: … }.
+  let logoDraft = {};
+  let logoTarget = 'dark';
+  const logoPreviewUrls = {};
+
+  function draftLogoUrl(mode) {
+    const v = logoDraft[mode];
+    if (v === 'remove') return null;
+    if (v instanceof File) {
+      if (!logoPreviewUrls[mode] || logoPreviewUrls[mode].file !== v) {
+        if (logoPreviewUrls[mode]) URL.revokeObjectURL(logoPreviewUrls[mode].url);
+        logoPreviewUrls[mode] = { file: v, url: URL.createObjectURL(v) };
+      }
+      return logoPreviewUrls[mode].url;
+    }
+    return S.logos && S.logos[mode] ? `/api/logo/${mode}?v=${S.logos.version}` : null;
+  }
+
+  function renderLogoSettings(msg) {
+    const custom = S.logoChoice === 'custom';
+    const seed = PAL.seedOf(S.colors || S.settings);
+    const slot = (mode, title, hint) => {
+      const own = draftLogoUrl(mode);
+      const other = draftLogoUrl(mode === 'dark' ? 'light' : 'dark');
+      const shown = own || other;
+      const bar = hex(PAL.compute(seed, mode === 'dark').paperBar);
+      const muted = hex(PAL.compute(seed, mode === 'dark').muted);
+      return `<div class="logo-slot">
+        <div><h3>${title}</h3><div class="muted small">${own || !other ? hint : 'Bruger det andet logo'}</div></div>
+        <div class="logo-box" style="background:${bar}">${shown ? `<img src="${esc(shown)}" alt="Logo til ${mode === 'dark' ? 'mørk' : 'lys'} visning">` : `<span style="color:${muted}">Intet billede valgt</span>`}</div>
+        <div class="logo-actions">
+          <button type="button" class="btn-outline" data-logo-pick="${mode}">${icon('upload')}${own ? 'Skift billede' : 'Vælg billede'}</button>
+          ${own ? `<button type="button" class="btn-outline danger" data-logo-remove="${mode}">${icon('trash')}Fjern</button>` : ''}
+        </div>
+      </div>`;
+    };
+    $('logo-settings').innerHTML = `
+      <div class="modes" role="group" aria-label="Logo">
+        <button type="button" data-logo-choice="ctpos" aria-pressed="${!custom}">CTpos</button>
+        <button type="button" data-logo-choice="custom" aria-pressed="${custom}">Eget logo</button>
+      </div>
+      <p class="muted small" style="margin:6px 0 0">Appens ikon og fanebladets ikon er altid CTpos.</p>
+      ${custom ? `<div class="logo-slots">${slot('dark', 'Til mørk visning', 'Lyst logo, fx hvid tekst')}${slot('light', 'Til lys visning', 'Mørkt logo, fx sort tekst')}</div>
+        <p class="muted small" style="margin:10px 0 0">Har du kun ét logo, bruges det i begge visninger. PNG med gennemsigtig baggrund er bedst. Højst 2 MB.</p>` : ''}
+      ${msg ? `<p class="small" style="margin:10px 0 0;color:var(--bad);font-weight:600">${esc(msg)}</p>` : ''}`;
+  }
+
+  $('logo-settings').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-logo-choice]');
+    if (c) { S.logoChoice = c.dataset.logoChoice; return renderLogoSettings(); }
+    const pick = e.target.closest('[data-logo-pick]');
+    if (pick) { logoTarget = pick.dataset.logoPick; $('logo-file').value = ''; return $('logo-file').click(); }
+    const rm = e.target.closest('[data-logo-remove]');
+    if (rm) { logoDraft[rm.dataset.logoRemove] = 'remove'; renderLogoSettings(); }
+  });
+  $('logo-file').addEventListener('change', () => {
+    const f = $('logo-file').files[0];
+    if (!f) return;
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(f.type)) return renderLogoSettings('Vælg en PNG, JPG, WebP eller GIF.');
+    if (f.size > 2 * 1024 * 1024) return renderLogoSettings('Billedet er for stort. Højst 2 MB.');
+    logoDraft[logoTarget] = f;
+    S.logoChoice = 'custom';
+    renderLogoSettings();
+  });
+
+  async function saveLogos() {
+    for (const mode of ['dark', 'light']) {
+      const v = logoDraft[mode];
+      if (v instanceof File) {
+        const r = await fetch('/api/logo/' + mode, { method: 'PUT', headers: { 'Content-Type': v.type }, body: v });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error || 'Logoet kunne ikke gemmes');
+        S.logos = j;
+      } else if (v === 'remove') {
+        S.logos = await (await fetch('/api/logo/' + mode, { method: 'DELETE' })).json();
+      }
+    }
+    logoDraft = {};
   }
   window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyTheme($('settings').hidden ? S.settings : S.colors));
 
@@ -548,6 +725,7 @@
   function setColors(patch) {
     Object.assign(S.colors, patch);
     renderColors();
+    renderLogoSettings();
   }
   $('colors').addEventListener('click', (e) => {
     const m = e.target.closest('[data-mode]');
@@ -585,11 +763,20 @@
       if (!el.name) continue;
       body[el.name] = el.type === 'checkbox' ? el.checked : el.value;
     }
-    Object.assign(body, S.colors);
+    Object.assign(body, S.colors, { logo: S.logoChoice });
     try {
+      try {
+        await saveLogos();
+      } catch (err) {
+        renderLogoSettings(err.message);
+        $('settings-msg').textContent = 'Logoet blev ikke gemt';
+        return;
+      }
       const r = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
       S.settings = j.settings;
+      applyTheme(S.colors);
+      renderLogoSettings();
       if (body.zoom) setZoom(ZOOMS.indexOf(body.zoom));
       applyLayout();
       render();
@@ -598,6 +785,35 @@
       $('settings-msg').textContent = 'Kunne ikke gemme. Tjek forbindelsen.';
     }
   });
+  $('btn-print-test').addEventListener('click', async () => {
+    const btn = $('btn-print-test');
+    btn.disabled = true;
+    // Test with the address typed in, even before Gem: save the printer fields first.
+    const body = {};
+    for (const name of ['printerEnabled', 'printerHost', 'printerPort', 'autoPrint']) {
+      const el = form.elements[name];
+      body[name] = el.type === 'checkbox' ? el.checked : el.value;
+    }
+    body.printerEnabled = true;
+    form.elements.printerEnabled.checked = true;
+    try {
+      await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const r = await fetch('/api/printer/test', { method: 'POST' });
+      S.lastPrint = await r.json();
+    } catch {
+      S.lastPrint = { ok: false, error: 'Kunne ikke nå skærmens server' };
+    }
+    btn.disabled = false;
+    renderPrintStatus();
+  });
+  function renderPrintStatus() {
+    const p = S.lastPrint;
+    const el = $('print-status');
+    if (!p) { el.textContent = 'Ingen udskrifter endnu.'; el.style.color = ''; return; }
+    el.textContent = p.ok ? `${p.what} printet kl. ${hhmm(new Date(p.at))}` : `${p.what || 'Udskrift'} fejlede: ${p.error}`;
+    el.style.color = p.ok ? 'var(--ok)' : 'var(--bad)';
+  }
+
   $('btn-test').addEventListener('click', async () => {
     ensureAudio();
     try { await post('/api/test'); $('settings-msg').textContent = 'Testbon sendt til skærmen'; } catch { $('settings-msg').textContent = 'Testbon fejlede'; }
@@ -617,6 +833,7 @@
     S.clockOffset = new Date(data.serverTime) - Date.now();
     const firstLoad = !S.settings;
     S.settings = data.settings;
+    S.logos = data.logos;
     S.status = data.status;
     S.active = data.active;
     S.done = data.done;
@@ -628,9 +845,11 @@
       applyZoom();
       S.seen = new Set(S.active.map((t) => t.id));
     }
+    S.lastPrint = data.lastPrint;
     if ($('settings').hidden) applyTheme(S.settings);
     applyLayout();
     render();
+    if (S.focusId) renderFocus();
     if (!$('settings').hidden) renderSettingsStatus();
     $('clock').textContent = hhmm(now());
   }

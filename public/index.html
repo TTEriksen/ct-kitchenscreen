@@ -65,6 +65,10 @@
     <button id="next" class="btn-nav" type="button">Næste<span id="next-icon" class="icon" data-icon="right"></span></button>
   </footer>
 
+  <div id="focus" class="overlay focus-overlay" hidden>
+    <div id="focus-card" class="focus-card"></div>
+  </div>
+
   <div id="snack" class="snack" role="status" hidden>
     <span id="snack-text"></span>
     <button id="snack-undo" class="btn-accent" type="button"><span class="icon" data-icon="undo"></span>Fortryd</button>
@@ -98,6 +102,11 @@
         <section class="panel" style="grid-column: 1 / -1">
           <div class="panel-head"><span class="icon accent" data-icon="palette"></span><h2>Farver</h2></div>
           <div id="colors"></div>
+        </section>
+        <section class="panel" style="grid-column: 1 / -1">
+          <div class="panel-head"><span class="icon accent" data-icon="image"></span><h2>Logo i topbjælken</h2></div>
+          <div id="logo-settings"></div>
+          <input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
         </section>
 
         <section class="panel">
@@ -139,6 +148,25 @@
         </section>
 
         <div class="col">
+          <section class="panel">
+            <div class="panel-head"><span class="icon accent" data-icon="print"></span><h2>Fysisk printer</h2></div>
+            <p class="muted">Print bonner på en rigtig netværksprinter (ESC/POS, fx Epson eller Star) i køkkenet.</p>
+            <label class="toggle"><span><span class="icon" data-icon="print"></span>Brug printer</span><input name="printerEnabled" type="checkbox"></label>
+            <div class="grid2">
+              <label>Printerens IP-adresse
+                <input name="printerHost" type="text" inputmode="decimal" placeholder="192.168.1.60">
+              </label>
+              <label>Port
+                <input name="printerPort" type="number" min="1" max="65535" inputmode="numeric">
+              </label>
+            </div>
+            <label class="toggle"><span><span class="icon" data-icon="receipt"></span>Udskriv alle nye bonner automatisk</span><input name="autoPrint" type="checkbox"></label>
+            <p class="muted small">Ellers printes en bon fra den store visning: tryk på bonnen, og tryk Print. En genudskrift får overskriften KOPI.</p>
+            <div class="row-wrap">
+              <button id="btn-print-test" class="btn-outline" type="button"><span class="icon" data-icon="print"></span>Testudskrift</button>
+            </div>
+            <p id="print-status" class="muted small">Ingen udskrifter endnu.</p>
+          </section>
           <section class="panel">
             <div class="panel-head"><span class="icon accent" data-icon="sliders"></span><h2>Visning</h2></div>
             <div class="grid3">

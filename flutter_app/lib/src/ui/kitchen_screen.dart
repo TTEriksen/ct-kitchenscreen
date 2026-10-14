@@ -9,6 +9,7 @@ import '../models.dart';
 import 'settings_page.dart';
 import 'theme.dart';
 import 'ticket_card.dart';
+import 'venue_logo.dart';
 
 class KitchenScreen extends StatefulWidget {
   const KitchenScreen({super.key, required this.kitchen});
@@ -30,6 +31,9 @@ class _KitchenScreenState extends State<KitchenScreen> {
   Timer? _tick;
   Timer? _snackTimer;
   Ticket? _snack;
+  String? _focusId; // the ticket shown large
+  String? _flash; // a short message, e.g. after printing
+  Timer? _flashTimer;
   double? _zoom;
   int _first = 0;
   int _last = 0;
@@ -51,6 +55,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
     _arrivalSub.cancel();
     _tick?.cancel();
     _snackTimer?.cancel();
+    _flashTimer?.cancel();
     _scroll.dispose();
     _player.dispose();
     super.dispose();
@@ -154,6 +159,20 @@ class _KitchenScreenState extends State<KitchenScreen> {
     });
   }
 
+  void _showFlash(String msg) {
+    _flashTimer?.cancel();
+    setState(() => _flash = msg);
+    _flashTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _flash = null);
+    });
+  }
+
+  Future<void> _print(Ticket t) async {
+    final r = await k.printTicket(t);
+    if (!mounted) return;
+    _showFlash(r.ok ? '${headOf(t).title} · sendt til printeren' : r.error ?? 'Kunne ikke printe');
+  }
+
   void _undo() {
     final t = _snack;
     if (t != null) k.restore(t);
@@ -174,6 +193,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
       endDrawerEnableOpenDragGesture: false,
       body: SafeArea(
         child: LayoutBuilder(builder: (context, c) {
+          final focused = active.where((t) => t.id == _focusId).firstOrNull;
           final portrait = _portrait(c);
           return Stack(
             children: [
@@ -185,12 +205,26 @@ class _KitchenScreenState extends State<KitchenScreen> {
                   _bottomBar(active.length, portrait),
                 ],
               ),
+              if (focused != null) _focusOverlay(focused, c),
               if (_snack != null)
                 Positioned(
                   left: 16,
                   right: 16,
                   bottom: 104,
                   child: Center(child: _snackBar(_snack!)),
+                ),
+              if (_flash != null)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+                      decoration: BoxDecoration(color: K.inverseSurface, borderRadius: K.radius14),
+                      child: Text(_flash!, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: K.inverseInk)),
+                    ),
+                  ),
                 ),
             ],
           );
@@ -220,7 +254,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
         runSpacing: 12,
         children: [
           Row(mainAxisSize: MainAxisSize.min, children: [
-            Image.asset(K.logo, height: 40, semanticLabel: 'CTpos'),
+            VenueLogo(kitchen: k, height: 40),
             SizedBox(width: 16),
             Container(width: 1, height: 40, color: K.outlineVariant),
             SizedBox(width: 16),
@@ -336,6 +370,44 @@ class _KitchenScreenState extends State<KitchenScreen> {
       fresh: _fresh.contains(t.id),
       onDone: () => _done(t),
       onToggleRaw: () => setState(() => _rawOpen.contains(t.id) ? _rawOpen.remove(t.id) : _rawOpen.add(t.id)),
+      onTap: () => setState(() => _focusId = t.id),
+    );
+  }
+
+  /// The tapped ticket, large in the middle of the screen. Any tap outside its
+  /// buttons, on the ticket or beside it, makes it small again.
+  Widget _focusOverlay(Ticket t, BoxConstraints c) {
+    final m = _minutes(t);
+    void close() => setState(() => _focusId = null);
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: close,
+        child: Container(
+          color: Colors.black.withValues(alpha: .6),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: math.min(1200, c.maxWidth * .96),
+            height: c.maxHeight * .92,
+            child: TicketCard(
+              ticket: t,
+              fs: fs * 1.25,
+              minutes: m,
+              tone: _tone(m),
+              showRaw: false,
+              fillHeight: true,
+              expanded: true,
+              onTap: close,
+              onToggleRaw: () {},
+              onDone: () {
+                close();
+                _done(t);
+              },
+              onPrint: k.settings.printerEnabled ? () => _print(t) : null,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -380,7 +452,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
 
   Widget _empty() => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Image(image: AssetImage(K.logo), height: 90, semanticLabel: 'CTpos'),
+          VenueLogo(kitchen: k, height: 90),
           SizedBox(height: 32),
           Icon(Icons.check_circle_outline, size: 56, color: K.ok),
           SizedBox(height: 12),

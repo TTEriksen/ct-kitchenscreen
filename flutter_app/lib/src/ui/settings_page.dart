@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../kitchen.dart';
 import '../models.dart';
 import 'color_settings.dart';
+import 'logo_settings.dart';
 import 'theme.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -15,12 +16,16 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late Settings s = widget.kitchen.settings.copy();
+  late final _logos = LogoDraft(widget.kitchen);
   late final _name = TextEditingController(text: s.printerName);
   late final _port = TextEditingController(text: '${s.port}');
   late final _warn = TextEditingController(text: '${s.warnMinutes}');
   late final _late = TextEditingController(text: '${s.lateMinutes}');
   late final _keep = TextEditingController(text: _num(s.keepDoneHours));
   late final _words = TextEditingController(text: s.allergenWords.join(', '));
+  late final _printerHost = TextEditingController(text: s.printerHost);
+  late final _printerPort = TextEditingController(text: '${s.printerPort}');
+  bool _testing = false;
   String _msg = '';
 
   static String _num(double v) => v == v.roundToDouble() ? '${v.round()}' : '$v';
@@ -33,7 +38,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   void dispose() {
-    for (final c in [_name, _port, _warn, _late, _keep, _words]) {
+    for (final c in [_name, _port, _warn, _late, _keep, _words, _printerHost, _printerPort]) {
       c.dispose();
     }
     super.dispose();
@@ -46,7 +51,10 @@ class _SettingsPageState extends State<SettingsPage> {
       ..warnMinutes = (int.tryParse(_warn.text) ?? 10).clamp(1, 240)
       ..lateMinutes = (int.tryParse(_late.text) ?? 15).clamp(1, 240)
       ..keepDoneHours = (double.tryParse(_keep.text.replaceAll(',', '.')) ?? 2).clamp(0, 48)
+      ..printerHost = _printerHost.text.trim()
+      ..printerPort = (int.tryParse(_printerPort.text) ?? 9100).clamp(1, 65535)
       ..allergenWords = _words.text.split(RegExp(r'[,\n]')).map((w) => w.trim()).where((w) => w.isNotEmpty).toList();
+    await _logos.save(widget.kitchen);
     await widget.kitchen.saveSettings(next);
     setState(() => _msg = 'Gemt');
   }
@@ -90,7 +98,7 @@ class _SettingsPageState extends State<SettingsPage> {
           body: SafeArea(
             child: LayoutBuilder(builder: (context, c) {
               final wide = c.maxWidth > 900;
-              final left = _panel(Icons.lan_outlined, 'Printer-emulering', [
+              final emulation = _panel(Icons.lan_outlined, 'Printer-emulering', [
                 Text(
                   'Skærmen svarer som en kitchen printer. Kassen sender bonner til denne enheds IP-adresse og port, som den ellers ville printe til.',
                   style: TextStyle(fontSize: 15, height: 1.4, color: K.muted),
@@ -126,6 +134,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   'Giv tabletten en fast IP-adresse i Wi-Fi-indstillingerne (eller reservér den i routeren), og indtast den samme adresse og port i kassen.',
                   style: TextStyle(fontSize: 14, height: 1.4, color: K.muted),
                 ),
+              ]);
+              final left = Column(children: [
+                emulation,
+                const SizedBox(height: 16),
+                _printerPanel(k),
               ]);
               final right = Column(children: [
                 _panel(Icons.tune, 'Visning', [
@@ -200,6 +213,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   ColorSettings(settings: s, onChanged: () => setState(() {})),
                   const SizedBox(height: 16),
+                  LogoSettings(settings: s, draft: _logos, onChanged: () => setState(() {})),
+                  const SizedBox(height: 16),
                   wide
                       ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Expanded(child: left),
@@ -224,6 +239,57 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
+  }
+
+  Widget _printerPanel(Kitchen k) {
+    final last = k.lastPrint;
+    Widget toggle(String label, IconData icon, bool value, ValueChanged<bool> onChanged) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(borderRadius: K.radius, border: Border.all(color: K.outlineVariant)),
+          child: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            secondary: Icon(icon, color: K.ink),
+            title: Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: K.ink)),
+            value: value,
+            onChanged: (v) => setState(() => onChanged(v)),
+          ),
+        );
+    return _panel(Icons.print_outlined, 'Fysisk printer', [
+      Text('Print bonner på en rigtig netværksprinter (ESC/POS, fx Epson eller Star) i køkkenet.',
+          style: TextStyle(fontSize: 15, height: 1.4, color: K.muted)),
+      toggle('Brug printer', Icons.print_outlined, s.printerEnabled, (v) => s.printerEnabled = v),
+      _row([
+        _field('Printerens IP-adresse', _printerHost),
+        _field('Port', _printerPort, number: true),
+      ]),
+      toggle('Udskriv alle nye bonner automatisk', Icons.receipt_long_outlined, s.autoPrint, (v) => s.autoPrint = v),
+      Text('Ellers printes en bon fra den store visning: tryk på bonnen, og tryk Print. En genudskrift får overskriften KOPI.',
+          style: TextStyle(fontSize: 14, height: 1.4, color: K.muted)),
+      Row(children: [
+        OutlinedButton.icon(
+          onPressed: _testing
+              ? null
+              : () async {
+                  setState(() => _testing = true);
+                  final test = s.copy()
+                    ..printerHost = _printerHost.text.trim()
+                    ..printerPort = (int.tryParse(_printerPort.text) ?? 9100).clamp(1, 65535);
+                  await k.testPrint(test);
+                  if (mounted) setState(() => _testing = false);
+                },
+          icon: const Icon(Icons.print_outlined),
+          label: Text(_testing ? 'Printer…' : 'Testudskrift'),
+        ),
+      ]),
+      Text(
+        last == null
+            ? 'Ingen udskrifter endnu.'
+            : last.ok
+                ? '${last.what} printet kl. ${hhmm(last.at)}'
+                : '${last.what} fejlede: ${last.error}',
+        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: last == null ? K.muted : (last.ok ? K.ok : K.bad)),
+      ),
+    ]);
   }
 
   Widget _panel(IconData icon, String title, List<Widget> children) => Container(
