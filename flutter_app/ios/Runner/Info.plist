@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Vælg et billede af jeres logo til køkkenskærmens topbjælke.</string>
 	<key>NSLocalNetworkUsageDescription</key>

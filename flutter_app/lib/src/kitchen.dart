@@ -91,7 +91,15 @@ class Kitchen extends ChangeNotifier {
   File get _settingsFile => File('${_dir.path}/settings.json');
   File _logoFile(bool dark) => File('${_dir.path}/logo_${dark ? 'dark' : 'light'}.img');
 
+  /// App Store screenshots only (debug builds): the view to open on start,
+  /// read from screenshot_view.txt in the data folder (see tool/screenshots.sh).
+  String screenshotView = '';
+
   Future<void> _load() async {
+    if (kDebugMode) {
+      final f = File('${_dir.path}/screenshot_view.txt');
+      if (await f.exists()) screenshotView = (await f.readAsString()).trim();
+    }
     try {
       if (await _settingsFile.exists()) {
         settings = Settings.fromJson(jsonDecode(await _settingsFile.readAsString()) as Map<String, dynamic>);

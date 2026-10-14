@@ -52,6 +52,22 @@ class _KitchenScreenState extends State<KitchenScreen> {
     _tick = Timer.periodic(Duration(seconds: 15), (_) => setState(() {}));
     _player.setReleaseMode(ReleaseMode.stop);
     _measureSoon();
+    if (k.screenshotView.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _openForScreenshot());
+  }
+
+  /// App Store screenshots only (debug builds): opens focus, recall or settings
+  /// on start, as set by tool/screenshots.sh.
+  void _openForScreenshot() {
+    if (!mounted) return;
+    switch (k.screenshotView) {
+      case 'recall':
+        _openRecall();
+      case 'focus':
+        final t = k.active.where((t) => t.parsed.allergens.isNotEmpty && t.parsed.sections.length > 1).firstOrNull ?? k.active.firstOrNull;
+        if (t != null) setState(() => _focusId = t.id);
+      case 'settings':
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsPage(kitchen: k)));
+    }
   }
 
   @override
