@@ -9,6 +9,7 @@ It does the same as the browser version in the repository root:
 - **Done and recall:** Færdig with an 8-second Fortryd (undo). Afsluttede lists finished tickets so they can be brought back.
 - **Layout:** landscape shows tickets side by side, and portrait shows a grid that scrolls up and down.
 - **Kiosk behaviour:** a chime on new tickets, full screen, and the screen kept on. Tickets are saved on the tablet, so a restart loses nothing.
+- **Colours:** Settings › Farver has dark, light or automatic, five palettes plus your own accent and background tone, with a live preview of both modes and their contrast ratios. Colours are calculated in `lib/src/ui/palette.dart` (same maths as the web version's `public/palette.js`).
 
 ## Connecting the till
 
@@ -71,6 +72,6 @@ lib/src/printer/escpos.dart   ESC/POS and Star Line decoder, status replies
 lib/src/printer/codepages.dart PC865, PC850, PC858, PC437, Windows-1252, UTF-8
 lib/src/printer/parser.dart   reads table, guests, items, modifiers, allergens, notes
 lib/src/printer/samples.dart  test tickets
-lib/src/ui/                   kitchen screen, ticket card, settings (UNIPOS Staff colours)
+lib/src/ui/                   kitchen screen, ticket card, settings, colour palettes (CTpos design system)
 test/widget_test.dart         decoder and parser tests
 ```

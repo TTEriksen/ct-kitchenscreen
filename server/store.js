@@ -19,6 +19,11 @@ const DEFAULT_SETTINGS = {
   sound: true,
   keepDoneHours: 2,
   idleFlushMs: 800,
+  themeMode: 'dark', // 'dark' | 'light' | 'auto'
+  palette: 'ctpos', // 'ctpos' | 'brasserie' | 'hav' | 'skov' | 'kontrast' | 'custom'
+  customAccent: '#ED1C24',
+  customNeutralHue: 0,
+  customNeutralTint: 0,
   allergenWords: DEFAULT_ALLERGEN_WORDS,
 };
 
@@ -115,6 +120,10 @@ class Store {
       }
       next[key] = v;
     }
+    if (!/^#[0-9a-fA-F]{6}$/.test(next.customAccent)) next.customAccent = DEFAULT_SETTINGS.customAccent;
+    if (!['dark', 'light', 'auto'].includes(next.themeMode)) next.themeMode = DEFAULT_SETTINGS.themeMode;
+    next.customNeutralHue = Math.min(360, Math.max(0, next.customNeutralHue));
+    next.customNeutralTint = Math.min(0.4, Math.max(0, next.customNeutralTint));
     if (next.port < 1 || next.port > 65535) next.port = DEFAULT_SETTINGS.port;
     if (next.webPort < 1 || next.webPort > 65535) next.webPort = DEFAULT_SETTINGS.webPort;
     const old = this.settings;

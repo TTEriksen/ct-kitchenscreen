@@ -1,38 +1,69 @@
 import 'package:flutter/material.dart';
 
-/// UNIPOS Staff design tokens, dark theme.
-abstract final class K {
-  static const accent = Color(0xFFC67139);
-  static const onAccent = Color(0xFFFFFFFF);
-  static const paper = Color(0xFF221B14);
-  static const paperBar = Color(0xFF2E251C);
-  static const card = Color(0xFF2B231B);
-  static const key = Color(0xFF3D332D);
-  static const ink = Color(0xFFF0DFD7);
-  static const white = Color(0xFFFFFFFF);
-  static const muted = Color(0xFFB3A18B);
-  static const ok = Color(0xFF6FBFA6);
-  static const bad = Color(0xFFE08373);
-  static const badGround = Color(0xFF3B211B);
-  static const primary = Color(0xFFFFB68B);
-  static const primaryContainer = Color(0xFF6F3811);
-  static const onPrimaryContainer = Color(0xFFFFDBC8);
-  static const outline = Color(0xFF9F8D84);
-  static const outlineVariant = Color(0xFF52443C);
-  static const inverseSurface = Color(0xFFF0DFD7);
-  static const inverseInk = Color(0xFF382E29);
+import '../models.dart';
+import 'palette.dart';
 
-  static const radius = BorderRadius.all(Radius.circular(12));
+/// Colours of the active palette (CTpos design system by default), plus the
+/// shapes and fonts that do not change with it. The app sets [K.p] from the
+/// saved settings before every build, so widgets read colours straight from K.
+abstract final class K {
+  static Palette p = Palette.from(PaletteSeed.presets.first, dark: true);
+
+  /// The palette chosen in settings, resolved for dark or light mode.
+  static Palette resolve(Settings s, Brightness platform) {
+    final dark = switch (s.themeMode) { 'light' => false, 'auto' => platform == Brightness.dark, _ => true };
+    return Palette.from(seedOf(s), dark: dark);
+  }
+
+  static PaletteSeed seedOf(Settings s) => s.palette == 'custom'
+      ? PaletteSeed(
+          id: 'custom',
+          name: 'Egen',
+          description: 'Dine egne farver.',
+          accent: Color(s.customAccent),
+          neutralHue: s.customNeutralHue,
+          neutralTint: s.customNeutralTint,
+        )
+      : PaletteSeed.byId(s.palette);
+
+  static Color get accent => p.accent;
+  static Color get onAccent => p.onAccent;
+  static Color get paper => p.paper;
+  static Color get paperBar => p.paperBar;
+  static Color get card => p.card;
+  static Color get key => p.key;
+  static Color get ink => p.ink;
+  static Color get strong => p.strong;
+  static Color get muted => p.muted;
+  static Color get ok => p.ok;
+  static Color get warn => p.warn;
+  static Color get bad => p.bad;
+  static Color get onBad => p.onBad;
+  static Color get badGround => p.badGround;
+  static Color get primary => p.primary;
+  static Color get primaryContainer => p.primaryContainer;
+  static Color get onPrimaryContainer => p.onPrimaryContainer;
+  static Color get outline => p.outline;
+  static Color get outlineVariant => p.outlineVariant;
+  static Color get inverseSurface => p.inverseSurface;
+  static Color get inverseInk => p.inverseInk;
+
+  /// CTpos wordmark: white on dark grounds, black on light ones (red bar in both).
+  static String get logo => p.dark ? 'assets/ctpos_reversed.png' : 'assets/ctpos_color.png';
+
+  // Radii from the CTpos design system: controls 6, cards 10, dialogs 16.
+  static const radius = BorderRadius.all(Radius.circular(10));
+  static const radiusControl = BorderRadius.all(Radius.circular(6));
   static const radiusPill = BorderRadius.all(Radius.circular(20));
-  static const radius14 = BorderRadius.all(Radius.circular(14));
+  static const radius14 = BorderRadius.all(Radius.circular(16));
 
   static const mono = ['Menlo', 'Roboto Mono', 'monospace'];
 
   static ThemeData theme() {
     final base = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: ColorScheme.fromSeed(seedColor: accent, brightness: Brightness.dark).copyWith(
+      brightness: p.dark ? Brightness.dark : Brightness.light,
+      colorScheme: ColorScheme.fromSeed(seedColor: accent, brightness: p.dark ? Brightness.dark : Brightness.light).copyWith(
         surface: card,
         onSurface: ink,
         outline: outline,
@@ -40,7 +71,7 @@ abstract final class K {
         primary: primary,
       ),
       scaffoldBackgroundColor: paper,
-      appBarTheme: const AppBarTheme(backgroundColor: paperBar, foregroundColor: white, elevation: 0, scrolledUnderElevation: 0),
+      appBarTheme: AppBarTheme(backgroundColor: paperBar, foregroundColor: strong, elevation: 0, scrolledUnderElevation: 0),
       dividerColor: outlineVariant,
     );
     return base.copyWith(
@@ -57,24 +88,35 @@ abstract final class K {
         style: OutlinedButton.styleFrom(
           foregroundColor: ink,
           minimumSize: const Size(58, 58),
-          side: const BorderSide(color: outline),
+          side: BorderSide(color: outline),
           textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
           shape: const RoundedRectangleBorder(borderRadius: radius),
           padding: const EdgeInsets.symmetric(horizontal: 18),
         ),
       ),
-      inputDecorationTheme: const InputDecorationTheme(
+      inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: key,
-        border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: outline)),
-        enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: outline)),
-        focusedBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: primary, width: 2)),
-        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        border: OutlineInputBorder(borderRadius: radiusControl, borderSide: BorderSide(color: outline)),
+        enabledBorder: OutlineInputBorder(borderRadius: radiusControl, borderSide: BorderSide(color: outline)),
+        focusedBorder: OutlineInputBorder(borderRadius: radiusControl, borderSide: BorderSide(color: primary, width: 2)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         labelStyle: TextStyle(color: muted),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? white : outline),
+        thumbColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? onAccent : outline),
         trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? accent : key),
+      ),
+      sliderTheme: SliderThemeData(activeTrackColor: accent, thumbColor: accent, inactiveTrackColor: key),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: SegmentedButton.styleFrom(
+          selectedBackgroundColor: accent,
+          selectedForegroundColor: onAccent,
+          foregroundColor: ink,
+          side: BorderSide(color: outline),
+          minimumSize: const Size(64, 52),
+          textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

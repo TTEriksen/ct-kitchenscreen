@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../kitchen.dart';
 import '../models.dart';
+import 'color_settings.dart';
 import 'theme.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -62,24 +63,24 @@ class _SettingsPageState extends State<SettingsPage> {
             toolbarHeight: 82,
             leadingWidth: 84,
             leading: Padding(
-              padding: const EdgeInsets.only(left: 16),
+              padding: EdgeInsets.only(left: 16),
               child: Center(
                 child: IconButton.filled(
                   onPressed: () => Navigator.of(context).pop(),
-                  style: IconButton.styleFrom(backgroundColor: K.key, foregroundColor: K.ink, minimumSize: const Size(56, 56), shape: const RoundedRectangleBorder(borderRadius: K.radius)),
-                  icon: const Icon(Icons.arrow_back, size: 30, semanticLabel: 'Tilbage til køkkenskærmen'),
+                  style: IconButton.styleFrom(backgroundColor: K.key, foregroundColor: K.ink, minimumSize: Size(56, 56), shape: RoundedRectangleBorder(borderRadius: K.radius)),
+                  icon: Icon(Icons.arrow_back, size: 30, semanticLabel: 'Tilbage til køkkenskærmen'),
                 ),
               ),
             ),
-            title: const Text('Opsætning', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+            title: Text('Opsætning', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
             actions: [
               Container(
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                margin: EdgeInsets.only(right: 16),
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(borderRadius: K.radiusPill, border: Border.all(color: st.listening ? K.ok : K.bad)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(st.listening ? Icons.check_circle_outline : Icons.error_outline, color: st.listening ? K.ok : K.bad, size: 20),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Text(st.listening ? 'Lytter på port ${st.port}' : (st.error ?? 'Lytter ikke'),
                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: st.listening ? K.ok : K.bad)),
                 ]),
@@ -90,16 +91,16 @@ class _SettingsPageState extends State<SettingsPage> {
             child: LayoutBuilder(builder: (context, c) {
               final wide = c.maxWidth > 900;
               final left = _panel(Icons.lan_outlined, 'Printer-emulering', [
-                const Text(
+                Text(
                   'Skærmen svarer som en kitchen printer. Kassen sender bonner til denne enheds IP-adresse og port, som den ellers ville printe til.',
                   style: TextStyle(fontSize: 15, height: 1.4, color: K.muted),
                 ),
                 _field('Printernavn', _name),
                 _row([
                   _field('Port', _port, number: true),
-                  _drop('Protokol', s.protocol, const {'escpos': 'ESC/POS (Epson m.fl.)', 'star': 'Star Line'}, (v) => s.protocol = v),
+                  _drop('Protokol', s.protocol, {'escpos': 'ESC/POS (Epson m.fl.)', 'star': 'Star Line'}, (v) => s.protocol = v),
                 ]),
-                _drop('Tegnsæt', s.charset, const {
+                _drop('Tegnsæt', s.charset, {
                   'auto': 'Automatisk',
                   'cp865': 'PC865 nordisk',
                   'cp850': 'PC850',
@@ -108,20 +109,20 @@ class _SettingsPageState extends State<SettingsPage> {
                   'utf8': 'UTF-8',
                   'cp437': 'PC437',
                 }, (v) => s.charset = v),
-                const Text('Denne enheds IP-adresser', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: K.ink)),
+                Text('Denne enheds IP-adresser', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: K.ink)),
                 Wrap(spacing: 8, runSpacing: 8, children: [
-                  if (k.ips.isEmpty) const Text('Ingen netværksforbindelse fundet', style: TextStyle(color: K.muted)),
+                  if (k.ips.isEmpty) Text('Ingen netværksforbindelse fundet', style: TextStyle(color: K.muted)),
                   for (final ip in k.ips)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: const BoxDecoration(color: K.paper, borderRadius: K.radius),
+                      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(color: K.paper, borderRadius: K.radius),
                       child: Text.rich(TextSpan(children: [
-                        TextSpan(text: ip.address, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: K.white)),
-                        TextSpan(text: '  ${ip.iface}', style: const TextStyle(fontSize: 13, color: K.muted)),
+                        TextSpan(text: ip.address, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: K.strong)),
+                        TextSpan(text: '  ${ip.iface}', style: TextStyle(fontSize: 13, color: K.muted)),
                       ])),
                     ),
                 ]),
-                const Text(
+                Text(
                   'Giv tabletten en fast IP-adresse i Wi-Fi-indstillingerne (eller reservér den i routeren), og indtast den samme adresse og port i kassen.',
                   style: TextStyle(fontSize: 14, height: 1.4, color: K.muted),
                 ),
@@ -130,30 +131,30 @@ class _SettingsPageState extends State<SettingsPage> {
                 _panel(Icons.tune, 'Visning', [
                   _row([
                     _drop('Tekststørrelse', '${s.zoom}', {for (final z in Settings.zooms) '$z': '${(z * 100).round()}%'}, (v) => s.zoom = double.parse(v)),
-                    _drop('Layout', s.layout, const {'auto': 'Automatisk', 'landscape': 'Liggende', 'portrait': 'Stående'}, (v) => s.layout = v),
+                    _drop('Layout', s.layout, {'auto': 'Automatisk', 'landscape': 'Liggende', 'portrait': 'Stående'}, (v) => s.layout = v),
                   ]),
                   _row([
                     _field('Gul efter (min)', _warn, number: true),
                     _field('Rød efter (min)', _late, number: true),
                   ]),
                   _row([
-                    _drop('Bonvisning', s.view, const {'parsed': 'Opdelt', 'original': 'Original bon'}, (v) => s.view = v),
+                    _drop('Bonvisning', s.view, {'parsed': 'Opdelt', 'original': 'Original bon'}, (v) => s.view = v),
                     _field('Gem afsluttede (timer)', _keep, number: true),
                   ]),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(borderRadius: K.radius, border: Border.all(color: K.outlineVariant)),
                     child: SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      secondary: const Icon(Icons.notifications_active_outlined, color: K.ink),
-                      title: const Text('Lyd ved ny bon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: K.ink)),
+                      secondary: Icon(Icons.notifications_active_outlined, color: K.ink),
+                      title: Text('Lyd ved ny bon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: K.ink)),
                       value: s.sound,
                       onChanged: (v) => setState(() => s.sound = v),
                     ),
                   ),
                   _field('Allergen-ord (adskilt med komma)', _words, lines: 3),
                 ]),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 _panel(Icons.receipt_long_outlined, 'Drift', [
                   Wrap(spacing: 12, runSpacing: 12, children: [
                     OutlinedButton.icon(
@@ -161,8 +162,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         k.sendTestTicket();
                         setState(() => _msg = 'Testbon sendt til skærmen');
                       },
-                      icon: const Icon(Icons.print_outlined),
-                      label: const Text('Modtag testbon'),
+                      icon: Icon(Icons.print_outlined),
+                      label: Text('Modtag testbon'),
                     ),
                     OutlinedButton.icon(
                       onPressed: () async {
@@ -170,11 +171,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           context: context,
                           builder: (c) => AlertDialog(
                             backgroundColor: K.card,
-                            title: const Text('Ryd alle bonner?'),
-                            content: const Text('Alle bonner fjernes, også de afsluttede.'),
+                            title: Text('Ryd alle bonner?'),
+                            content: Text('Alle bonner fjernes, også de afsluttede.'),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Annullér')),
-                              FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Ryd alle')),
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: Text('Annullér')),
+                              FilledButton(onPressed: () => Navigator.pop(c, true), child: Text('Ryd alle')),
                             ],
                           ),
                         );
@@ -183,26 +184,30 @@ class _SettingsPageState extends State<SettingsPage> {
                           setState(() => _msg = 'Alle bonner er fjernet');
                         }
                       },
-                      style: OutlinedButton.styleFrom(foregroundColor: K.bad, side: const BorderSide(color: K.bad)),
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Ryd alle bonner'),
+                      style: OutlinedButton.styleFrom(foregroundColor: K.bad, side: BorderSide(color: K.bad)),
+                      icon: Icon(Icons.delete_outline),
+                      label: Text('Ryd alle bonner'),
                     ),
                   ]),
                   Text(
                     st.lastJobAt != null ? 'Sidste bon modtaget kl. ${hhmm(st.lastJobAt!)} · ${st.jobs} siden start' : 'Ingen bonner modtaget siden start.',
-                    style: const TextStyle(fontSize: 14, color: K.muted),
+                    style: TextStyle(fontSize: 14, color: K.muted),
                   ),
                 ]),
               ]);
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: wide
-                    ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Expanded(child: left),
-                        const SizedBox(width: 16),
-                        Expanded(child: right),
-                      ])
-                    : Column(children: [left, const SizedBox(height: 16), right]),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  ColorSettings(settings: s, onChanged: () => setState(() {})),
+                  const SizedBox(height: 16),
+                  wide
+                      ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Expanded(child: left),
+                          const SizedBox(width: 16),
+                          Expanded(child: right),
+                        ])
+                      : Column(children: [left, const SizedBox(height: 16), right]),
+                ]),
               );
             }),
           ),
@@ -210,10 +215,10 @@ class _SettingsPageState extends State<SettingsPage> {
             color: K.paperBar,
             padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + MediaQuery.paddingOf(context).bottom),
             child: Row(children: [
-              Expanded(child: Text(_msg, style: const TextStyle(fontSize: 16, color: K.muted))),
-              OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annullér')),
-              const SizedBox(width: 12),
-              FilledButton.icon(onPressed: _save, icon: const Icon(Icons.check), label: const Text('Gem')),
+              Expanded(child: Text(_msg, style: TextStyle(fontSize: 16, color: K.muted))),
+              OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: Text('Annullér')),
+              SizedBox(width: 12),
+              FilledButton.icon(onPressed: _save, icon: Icon(Icons.check), label: Text('Gem')),
             ]),
           ),
         );
@@ -222,21 +227,21 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _panel(IconData icon, String title, List<Widget> children) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(color: K.card, borderRadius: K.radius14),
+        padding: EdgeInsets.all(24),
+        decoration: BoxDecoration(color: K.card, borderRadius: K.radius14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(children: [
-            Icon(icon, color: K.accent, size: 26),
-            const SizedBox(width: 10),
-            Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: K.white)),
+            Icon(icon, color: K.primary, size: 26),
+            SizedBox(width: 10),
+            Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: K.strong)),
           ]),
-          for (final c in children) ...[const SizedBox(height: 16), c],
+          for (final c in children) ...[SizedBox(height: 16), c],
         ]),
       );
 
   Widget _row(List<Widget> children) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) const SizedBox(width: 14),
+          if (i > 0) SizedBox(width: 14),
           Expanded(child: children[i]),
         ],
       ]);
@@ -244,7 +249,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _field(String label, TextEditingController c, {bool number = false, int lines = 1}) => TextField(
         controller: c,
         maxLines: lines,
-        keyboardType: number ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        keyboardType: number ? TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
         style: TextStyle(fontSize: lines > 1 ? 16 : 20, color: K.ink),
         decoration: InputDecoration(labelText: label),
       );
@@ -253,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> {
         initialValue: options.containsKey(value) ? value : options.keys.first,
         isExpanded: true,
         dropdownColor: K.key,
-        style: const TextStyle(fontSize: 20, color: K.ink),
+        style: TextStyle(fontSize: 20, color: K.ink),
         decoration: InputDecoration(labelText: label),
         items: [for (final e in options.entries) DropdownMenuItem(value: e.key, child: Text(e.value))],
         onChanged: (v) {

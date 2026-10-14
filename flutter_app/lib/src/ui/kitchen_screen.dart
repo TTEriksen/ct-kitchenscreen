@@ -40,8 +40,9 @@ class _KitchenScreenState extends State<KitchenScreen> {
     k.addListener(_changed);
     _scroll.addListener(_measureSoon);
     _arrivalSub = k.arrivals.listen(_arrived);
-    _tick = Timer.periodic(const Duration(seconds: 15), (_) => setState(() {}));
+    _tick = Timer.periodic(Duration(seconds: 15), (_) => setState(() {}));
     _player.setReleaseMode(ReleaseMode.stop);
+    _measureSoon();
   }
 
   @override
@@ -63,7 +64,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
 
   void _arrived(Ticket t) {
     _fresh.add(t.id);
-    Timer(const Duration(seconds: 3), () {
+    Timer(Duration(seconds: 3), () {
       if (mounted) setState(() => _fresh.remove(t.id));
     });
     if (k.settings.sound) _player.play(AssetSource('chime.wav'));
@@ -139,7 +140,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
       delta = per * step;
     }
     final target = (pos.pixels + dir * delta).clamp(0.0, pos.maxScrollExtent);
-    _scroll.animateTo(target, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic);
+    _scroll.animateTo(target, duration: Duration(milliseconds: 350), curve: Curves.easeOutCubic);
   }
 
   // ---------- Done / undo ----------
@@ -148,7 +149,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
     k.markDone(t);
     _snackTimer?.cancel();
     setState(() => _snack = t);
-    _snackTimer = Timer(const Duration(seconds: 8), () {
+    _snackTimer = Timer(Duration(seconds: 8), () {
       if (mounted) setState(() => _snack = null);
     });
   }
@@ -211,7 +212,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
 
     return Container(
       color: K.paperBar,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Wrap(
         alignment: WrapAlignment.spaceBetween,
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -219,16 +220,16 @@ class _KitchenScreenState extends State<KitchenScreen> {
         runSpacing: 12,
         children: [
           Row(mainAxisSize: MainAxisSize.min, children: [
-            Image.asset('assets/ct-mark.png', height: 44, semanticLabel: 'CT Consult'),
-            const SizedBox(width: 16),
+            Image.asset(K.logo, height: 40, semanticLabel: 'CTpos'),
+            SizedBox(width: 16),
             Container(width: 1, height: 40, color: K.outlineVariant),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-              Text(k.settings.printerName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: K.white)),
-              const SizedBox(height: 2),
+              Text(k.settings.printerName, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: K.strong)),
+              SizedBox(height: 2),
               Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(ok ? Icons.check_circle_outline : Icons.error_outline, size: 16, color: ok ? K.ok : K.bad),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   ok ? 'Printer $ip:${st.port} · klar' : 'Printer stoppet: ${st.error ?? 'starter…'}',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: ok ? K.ok : K.bad),
@@ -242,49 +243,49 @@ class _KitchenScreenState extends State<KitchenScreen> {
             runSpacing: 8,
             children: [
               Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-                Text('$n', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w700, height: 1, color: K.white)),
-                const SizedBox(width: 10),
-                Text(n == 1 ? 'bon venter' : 'bonner venter', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: K.white)),
+                Text('$n', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w700, height: 1, color: K.strong)),
+                SizedBox(width: 10),
+                Text(n == 1 ? 'bon venter' : 'bonner venter', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: K.strong)),
               ]),
               Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-                Text('$dishes', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700, height: 1, color: K.white)),
-                const SizedBox(width: 8),
-                const Text('retter i alt', style: TextStyle(fontSize: 18, color: K.muted)),
+                Text('$dishes', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, height: 1, color: K.strong)),
+                SizedBox(width: 8),
+                Text('retter i alt', style: TextStyle(fontSize: 18, color: K.muted)),
               ]),
               if (oldest >= 0) AgeChip(minutes: oldest, tone: _tone(oldest), fs: 18, prefix: 'Ældste '),
             ],
           ),
           Row(mainAxisSize: MainAxisSize.min, children: [
             _zoomControl(),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             OutlinedButton.icon(
               onPressed: () => _scaffold.currentState?.openEndDrawer(),
-              icon: const Icon(Icons.history, size: 24),
+              icon: Icon(Icons.history, size: 24),
               label: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Text('Afsluttede'),
-                const SizedBox(width: 8),
+                Text('Afsluttede'),
+                SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: const BoxDecoration(color: K.key, borderRadius: K.radiusPill),
-                  child: Text('${k.done.length}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: K.key, borderRadius: K.radiusPill),
+                  child: Text('${k.done.length}', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                 ),
               ]),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             SizedBox(
               width: 58,
               height: 58,
               child: OutlinedButton(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsPage(kitchen: k))),
                 style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
-                child: const Icon(Icons.settings_outlined, size: 28, semanticLabel: 'Opsætning'),
+                child: Icon(Icons.settings_outlined, size: 28, semanticLabel: 'Opsætning'),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             StreamBuilder(
-              stream: Stream.periodic(const Duration(seconds: 1)),
+              stream: Stream.periodic(Duration(seconds: 1)),
               builder: (_, _) => Text(hhmm(DateTime.now()),
-                  style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: K.white, fontFeatures: [FontFeature.tabularFigures()])),
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: K.strong, fontFeatures: [FontFeature.tabularFigures()])),
             ),
           ]),
         ],
@@ -314,7 +315,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
         SizedBox(
           width: 76,
           child: Text('${(zoom * 100).round()}%',
-              textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: K.white)),
+              textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: K.strong)),
         ),
         btn(Icons.text_increase, 'Større tekst', 1, i != zs.length - 1),
       ]),
@@ -344,7 +345,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
       return ListView.separated(
         controller: _scroll,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         itemCount: active.length,
         separatorBuilder: (_, _) => SizedBox(width: gap),
         itemBuilder: (_, i) => SizedBox(width: fs * 17, child: _card(active[i], true)),
@@ -372,18 +373,18 @@ class _KitchenScreenState extends State<KitchenScreen> {
     }
     return SingleChildScrollView(
       controller: _scroll,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Column(children: rows),
     );
   }
 
-  Widget _empty() => const Center(
+  Widget _empty() => Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Image(image: AssetImage('assets/ct-mark.png'), height: 110, semanticLabel: 'CT Consult'),
+          Image(image: AssetImage(K.logo), height: 90, semanticLabel: 'CTpos'),
           SizedBox(height: 32),
           Icon(Icons.check_circle_outline, size: 56, color: K.ok),
           SizedBox(height: 12),
-          Text('Ingen bonner venter', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: K.white)),
+          Text('Ingen bonner venter', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w700, color: K.strong)),
           SizedBox(height: 8),
           Text('Nye bonner vises her, så snart printeren modtager dem.', style: TextStyle(fontSize: 18, color: K.muted)),
         ]),
@@ -402,11 +403,11 @@ class _KitchenScreenState extends State<KitchenScreen> {
               foregroundColor: K.ink,
               disabledBackgroundColor: K.key.withValues(alpha: .5),
               disabledForegroundColor: K.ink.withValues(alpha: .4),
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: EdgeInsets.symmetric(horizontal: 18),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               if (iconFirst) Icon(icon, size: 32),
-              Text(label, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(label, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
               if (!iconFirst) Icon(icon, size: 32),
             ]),
           ),
@@ -414,24 +415,24 @@ class _KitchenScreenState extends State<KitchenScreen> {
     final active = k.active;
     return Container(
       color: K.paperBar,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
         nav('Forrige', portrait ? Icons.expand_less : Icons.chevron_left, -1, n > 0 && first > 1),
         Expanded(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text.rich(
               TextSpan(children: [
-                TextSpan(text: n == 0 ? 'Ingen bonner' : 'Viser $first–$last af $n', style: const TextStyle(fontWeight: FontWeight.w700)),
+                TextSpan(text: n == 0 ? 'Ingen bonner' : 'Viser $first–$last af $n', style: TextStyle(fontWeight: FontWeight.w700)),
                 if (n > 0)
                   TextSpan(
                     text: ' · ${more > 0 ? '$more flere ${portrait ? 'længere nede' : 'til højre'}' : 'alle vises'}',
-                    style: const TextStyle(color: K.muted),
+                    style: TextStyle(color: K.muted),
                   ),
               ]),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, color: K.white),
+              style: TextStyle(fontSize: 20, color: K.strong),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: [
               for (var i = 0; i < active.length; i++)
                 Container(
@@ -453,15 +454,15 @@ class _KitchenScreenState extends State<KitchenScreen> {
   Widget _snackBar(Ticket t) {
     final head = headOf(t);
     return Container(
-      padding: const EdgeInsets.fromLTRB(22, 10, 10, 10),
-      decoration: const BoxDecoration(color: K.inverseSurface, borderRadius: K.radius14),
+      padding: EdgeInsets.fromLTRB(22, 10, 10, 10),
+      decoration: BoxDecoration(color: K.inverseSurface, borderRadius: K.radius14),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Flexible(
           child: Text('${head.title} · bon ${t.number} ${t.parsed.isMessage ? 'er læst' : 'er færdig'}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: K.inverseInk)),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: K.inverseInk)),
         ),
-        const SizedBox(width: 20),
-        FilledButton.icon(onPressed: _undo, icon: const Icon(Icons.undo), label: const Text('Fortryd')),
+        SizedBox(width: 20),
+        FilledButton.icon(onPressed: _undo, icon: Icon(Icons.undo), label: Text('Fortryd')),
       ]),
     );
   }
@@ -481,37 +482,37 @@ class _RecallDrawer extends StatelessWidget {
         return Drawer(
           width: math.min(560, MediaQuery.sizeOf(context).width),
           backgroundColor: K.card,
-          shape: const RoundedRectangleBorder(),
+          shape: RoundedRectangleBorder(),
           child: SafeArea(
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Container(
-                padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
-                decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: K.outlineVariant))),
+                padding: EdgeInsets.fromLTRB(24, 20, 20, 20),
+                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: K.outlineVariant))),
                 child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Afsluttede bonner', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: K.white)),
+                      Text('Afsluttede bonner', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: K.strong)),
                       SizedBox(height: 4),
                       Text('Hent en bon tilbage, hvis den blev fjernet ved en fejl.', style: TextStyle(fontSize: 15, color: K.muted)),
                     ]),
                   ),
                   IconButton.filled(
                     onPressed: () => Navigator.of(context).pop(),
-                    style: IconButton.styleFrom(backgroundColor: K.key, foregroundColor: K.ink, minimumSize: const Size(64, 64), shape: const RoundedRectangleBorder(borderRadius: K.radius)),
-                    icon: const Icon(Icons.close, size: 32, semanticLabel: 'Luk'),
+                    style: IconButton.styleFrom(backgroundColor: K.key, foregroundColor: K.ink, minimumSize: Size(64, 64), shape: RoundedRectangleBorder(borderRadius: K.radius)),
+                    icon: Icon(Icons.close, size: 32, semanticLabel: 'Luk'),
                   ),
                 ]),
               ),
               Expanded(
                 child: done.isEmpty
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.all(24),
                         child: Text('Ingen afsluttede bonner endnu.', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, color: K.muted)),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                        padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
                         itemCount: done.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        separatorBuilder: (_, _) => SizedBox(height: 12),
                         itemBuilder: (_, i) {
                           final t = done[i];
                           final head = headOf(t);
@@ -520,21 +521,21 @@ class _RecallDrawer extends StatelessWidget {
                               ? t.parsed.message
                               : t.parsed.sections.expand((s) => s.items).map((it) => '${it.qty} × ${it.name}').join(', ');
                           return Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(color: K.paper, borderRadius: K.radius, border: Border.all(color: K.outlineVariant)),
                             child: Row(children: [
                               Expanded(
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Text(head.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: K.white)),
-                                  const SizedBox(height: 4),
+                                  Text(head.title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: K.strong)),
+                                  SizedBox(height: 4),
                                   Text('Bon ${t.number}${count > 0 ? ' · $count retter' : ''} · færdig ${hhmm(t.doneAt!)}',
-                                      style: const TextStyle(fontSize: 15, color: K.muted)),
-                                  const SizedBox(height: 4),
-                                  Text(summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, color: K.ink)),
+                                      style: TextStyle(fontSize: 15, color: K.muted)),
+                                  SizedBox(height: 4),
+                                  Text(summary, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 15, color: K.ink)),
                                 ]),
                               ),
-                              const SizedBox(width: 16),
-                              FilledButton.icon(onPressed: () => onRestore(t), icon: const Icon(Icons.undo), label: const Text('Hent tilbage')),
+                              SizedBox(width: 16),
+                              FilledButton.icon(onPressed: () => onRestore(t), icon: Icon(Icons.undo), label: Text('Hent tilbage')),
                             ]),
                           );
                         },

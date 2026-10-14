@@ -2,7 +2,7 @@
 <!-- Launch screen: the app's dark ground with the CT Consult logo. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
-        <color android:color="#221B14" />
+        <color android:color="#111111" />
     </item>
     <item>
         <bitmap

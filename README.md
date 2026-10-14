@@ -14,7 +14,9 @@ A kitchen display that pretends to be a network kitchen printer. Point the till'
 - Several screens can show the same tickets: open the page on each screen and they stay in sync.
 - New-ticket chime, the screen kept awake, and works offline. It has no dependencies beyond Node.js.
 
-The screen text is in Danish, following the UNIPOS Staff design system.
+- **Colours**: Settings › Farver has Mørk / Lys / Automatisk (follows the screen's own setting), five palettes (CTpos, Brasserie, Hav, Skov, Høj kontrast) and Egen, where you pick an accent colour and a background tone. Every other colour is calculated for both light and dark mode and adjusted until text, buttons, allergens and status colours reach at least 4.5:1 contrast. With a red accent, modifiers and notes switch to blue so they never look like allergens.
+
+The screen text is in Danish. Logo, icons and default colours come from the CTpos design system.
 
 There is also a native **iPad and Android tablet app** in [`flutter_app/`](flutter_app/README.md). The tablet itself is the printer, so no server is needed.
 

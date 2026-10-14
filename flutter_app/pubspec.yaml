@@ -61,7 +61,8 @@ flutter:
 
   assets:
     - assets/chime.wav
-    - assets/ct-mark.png
+    - assets/ctpos_reversed.png
+    - assets/ctpos_color.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

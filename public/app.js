@@ -24,6 +24,7 @@
     print: P('<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>'),
     sound: P('<path d="M4 9.5v5h4l5 4v-13l-5 4z"/><path d="M16.5 9a4 4 0 0 1 0 6"/><path d="M19 6.5a7.5 7.5 0 0 1 0 11"/>'),
     fullscreen: P('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+    palette: P('<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.9 1.2-1.8-.5-1.1.2-2.2 1.4-2.2H17a4 4 0 0 0 4-4c0-5-4-10-9-10z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
     network: P('<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>'),
   };
   const icon = (name) => `<span class="icon">${ICONS[name] || ''}</span>`;
@@ -361,7 +362,9 @@
   $('open-recall').addEventListener('click', () => { $('recall').hidden = false; });
   document.addEventListener('click', (e) => {
     const c = e.target.closest('[data-close]');
-    if (c) $(c.getAttribute('data-close')).hidden = true;
+    if (!c) return;
+    $(c.getAttribute('data-close')).hidden = true;
+    if (c.getAttribute('data-close') === 'settings' && S.settings) applyTheme(S.settings);
   });
 
   // ---------- Status ----------
@@ -461,15 +464,128 @@
   }
   $('open-settings').addEventListener('click', () => {
     fillSettings();
+    S.colors = pickColors(S.settings);
+    renderColors();
     $('settings-msg').textContent = '';
     $('settings').hidden = false;
   });
+
+  // ---------- Colours ----------
+  const PAL = window.KDSPalette;
+  const COLOR_KEYS = ['themeMode', 'palette', 'customAccent', 'customNeutralHue', 'customNeutralTint'];
+  const SWATCHES = ['#ED1C24', '#C67139', '#E39A0E', '#16915A', '#0F8B8D', '#2463D6', '#5B4BDB', '#B0327A', '#7A5230', '#4A5560'];
+  const pickColors = (s) => Object.fromEntries(COLOR_KEYS.map((k) => [k, s[k]]));
+
+  /** Paints the page in a palette and swaps the logo to the version that reads on it. */
+  function applyTheme(colors) {
+    const p = PAL.apply(colors);
+    const logo = p.dark ? 'ctpos_reversed.png' : 'ctpos_color.png';
+    document.querySelectorAll('.brand-logo, .brand-swap').forEach((img) => { if (!img.src.endsWith(logo)) img.src = logo; });
+    return p;
+  }
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyTheme($('settings').hidden ? S.settings : S.colors));
+
+  const hex = (rgb) => PAL.rgbToHex(rgb);
+  function strip(p) {
+    return `<div class="pal-strip" style="background:${hex(p.paper)}">` +
+      [p.card, p.accent, p.ok, p.warn, p.bad].map((c) => `<span style="background:${hex(c)};border:1px solid ${hex(p.outlineVariant)}"></span>`).join('') + '</div>';
+  }
+  function preview(p, title) {
+    const c = (k) => hex(p[k]);
+    const checks = p.checks.map((k) => `<div><span>${k.ratio >= 4.5 ? '✓' : '!'} ${esc(k.label)}</span><span>${k.ratio.toFixed(1).replace('.', ',')}:1</span></div>`).join('');
+    return `<div class="pv" style="background:${c('paper')};color:${c('ink')}">
+      <div class="pv-title" style="color:${c('muted')}">${esc(title)}</div>
+      <div class="pv-ticket" style="background:${c('card')};border:1px solid ${c('outlineVariant')}">
+        <div class="pv-head" style="background:${c('paperBar')}"><span style="color:${c('muted')}">Bord</span><span class="num" style="color:${c('strong')}">12</span>
+          <span class="pv-chip" style="color:${c('warn')}">12 min</span><span class="pv-chip" style="background:${c('bad')};border-color:${c('bad')};color:${c('onBad')}">18 min</span></div>
+        <div class="pv-body">
+          <div style="font-size:13px;color:${c('muted')}">Bon 1041 · 4 pers. · Mette</div>
+          <div class="pv-box" style="background:${c('badGround')};border:2px solid ${c('bad')};color:${c('bad')}">Allergi: gluten</div>
+          <div class="pv-item" style="color:${c('ink')}">2 ×  Wienerschnitzel</div>
+          <div class="pv-mod" style="color:${c('primary')}">Uden kapers</div>
+          <div class="pv-box" style="background:${c('primaryContainer')};color:${c('onPrimaryContainer')};font-weight:600">Note: børneretten først</div>
+          <div class="pv-btn" style="background:${c('accent')};color:${c('onAccent')}">Færdig</div>
+        </div>
+      </div>
+      <div class="pv-checks" style="color:${c('ink')}">${checks}</div>
+    </div>`;
+  }
+
+  let renderColors = function () {
+    const d = S.colors;
+    const seed = PAL.seedOf(d);
+    const all = [...PAL.PRESETS, PAL.seedOf({ ...d, palette: 'custom' })];
+    const mode = (v, label) => `<button type="button" data-mode="${v}" aria-pressed="${d.themeMode === v}">${label}</button>`;
+    const accentHsl = PAL.rgbToHsl(PAL.hexToRgb(d.customAccent) || [237, 28, 36]);
+    const range = (name, label, min, max, step, value, text) =>
+      `<label class="range-row"><span>${label}</span><input type="range" data-range="${name}" min="${min}" max="${max}" step="${step}" value="${value}"><output>${text}</output></label>`;
+
+    $('colors').innerHTML = `
+      <div class="field-label">Visning</div>
+      <div class="modes" role="group" aria-label="Visning">${mode('dark', 'Mørk')}${mode('light', 'Lys')}${mode('auto', 'Automatisk')}</div>
+      <p class="muted small" style="margin:6px 0 18px">Automatisk følger skærmens egen indstilling for lys og mørk.</p>
+      <div class="field-label">Palet</div>
+      <div class="palettes">${all.map((p) => `<button type="button" class="pal" data-palette="${p.id}" aria-pressed="${d.palette === p.id}">
+          ${strip(PAL.compute(p, true))}${strip(PAL.compute(p, false))}
+          <span class="pal-text"><span class="pal-name">${esc(p.name)}</span><span class="pal-desc">${esc(p.description)}</span></span></button>`).join('')}</div>
+      ${d.palette === 'custom' ? `<div class="custom" style="margin-top:18px">
+          <h3>Egen accentfarve</h3>
+          <div class="swatches">${SWATCHES.map((h) => `<button type="button" data-swatch="${h}" aria-label="${h}" aria-pressed="${h.toUpperCase() === String(d.customAccent).toUpperCase()}" style="background:${h}"></button>`).join('')}
+            <input type="color" data-accent value="${esc(String(d.customAccent).toLowerCase())}" aria-label="Vælg farve"></div>
+          ${range('hue', 'Farvetone', 0, 360, 1, Math.round(accentHsl.h), Math.round(accentHsl.h) + '°')}
+          ${range('sat', 'Mætning', 0, 100, 1, Math.round(accentHsl.s * 100), Math.round(accentHsl.s * 100) + ' %')}
+          ${range('light', 'Lyshed', 0, 100, 1, Math.round(accentHsl.l * 100), Math.round(accentHsl.l * 100) + ' %')}
+          <h3>Baggrundens tone</h3>
+          ${range('nhue', 'Farvetone', 0, 360, 1, Math.round(d.customNeutralHue), Math.round(d.customNeutralHue) + '°')}
+          ${range('ntint', 'Styrke', 0, 40, 1, Math.round(d.customNeutralTint * 100), d.customNeutralTint ? Math.round(d.customNeutralTint * 100) + ' %' : 'Grå')}
+          <p class="muted small">Knapper, tekst, allergier og statusfarver beregnes automatisk ud fra dine valg til både mørk og lys visning, og justeres så de altid kan læses (mindst 4,5:1).</p>
+        </div>` : ''}
+      <div class="field-label" style="margin-top:18px">Forhåndsvisning</div>
+      <div class="previews">${preview(PAL.compute(seed, true), 'Mørk')}${preview(PAL.compute(seed, false), 'Lys')}</div>`;
+    applyTheme(d);
+  };
+
+  function setColors(patch) {
+    Object.assign(S.colors, patch);
+    renderColors();
+  }
+  $('colors').addEventListener('click', (e) => {
+    const m = e.target.closest('[data-mode]');
+    if (m) return setColors({ themeMode: m.dataset.mode });
+    const p = e.target.closest('[data-palette]');
+    if (p) return setColors({ palette: p.dataset.palette });
+    const sw = e.target.closest('[data-swatch]');
+    if (sw) setColors({ customAccent: sw.dataset.swatch });
+  });
+  $('colors').addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.matches('[data-accent]')) return setColors({ customAccent: t.value.toUpperCase() });
+    const r = t.dataset.range;
+    if (!r) return;
+    const v = Number(t.value);
+    if (r === 'nhue') return setColors({ customNeutralHue: v });
+    if (r === 'ntint') return setColors({ customNeutralTint: v / 100 });
+    const h = PAL.rgbToHsl(PAL.hexToRgb(S.colors.customAccent) || [237, 28, 36]);
+    if (r === 'hue') h.h = v;
+    if (r === 'sat') h.s = v / 100;
+    if (r === 'light') h.l = v / 100;
+    setColors({ customAccent: PAL.rgbToHex(PAL.hslToRgb(h)) });
+  });
+  // Re-rendering the sliders mid-drag would drop the pointer, so restore focus to the same one.
+  const colorsEl = $('colors');
+  const origRender = renderColors;
+  renderColors = function () {
+    const active = document.activeElement && colorsEl.contains(document.activeElement) ? document.activeElement.dataset.range : null;
+    origRender();
+    if (active) { const el = colorsEl.querySelector(`[data-range="${active}"]`); if (el) el.focus(); }
+  };
   $('btn-save').addEventListener('click', async () => {
     const body = {};
     for (const el of form.elements) {
       if (!el.name) continue;
       body[el.name] = el.type === 'checkbox' ? el.checked : el.value;
     }
+    Object.assign(body, S.colors);
     try {
       const r = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
@@ -512,6 +628,7 @@
       applyZoom();
       S.seen = new Set(S.active.map((t) => t.id));
     }
+    if ($('settings').hidden) applyTheme(S.settings);
     applyLayout();
     render();
     if (!$('settings').hidden) renderSettingsStatus();

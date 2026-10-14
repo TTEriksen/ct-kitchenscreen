@@ -183,6 +183,11 @@ class Settings {
     this.sound = true,
     this.keepDoneHours = 2,
     this.idleFlushMs = 800,
+    this.themeMode = 'dark',
+    this.palette = 'ctpos',
+    this.customAccent = 0xFFED1C24,
+    this.customNeutralHue = 0,
+    this.customNeutralTint = 0,
     List<String>? allergenWords,
   }) : allergenWords = allergenWords ?? List.of(defaultAllergenWords);
 
@@ -198,6 +203,11 @@ class Settings {
   bool sound;
   double keepDoneHours;
   int idleFlushMs;
+  String themeMode; // 'dark' | 'light' | 'auto'
+  String palette; // a preset id or 'custom'
+  int customAccent; // ARGB
+  double customNeutralHue; // 0–360
+  double customNeutralTint; // 0–0.4
   List<String> allergenWords;
 
   static const zooms = [0.8, 1.0, 1.2, 1.45, 1.7, 2.0];
@@ -224,6 +234,11 @@ class Settings {
         'sound': sound,
         'keepDoneHours': keepDoneHours,
         'idleFlushMs': idleFlushMs,
+        'themeMode': themeMode,
+        'palette': palette,
+        'customAccent': customAccent,
+        'customNeutralHue': customNeutralHue,
+        'customNeutralTint': customNeutralTint,
         'allergenWords': allergenWords,
       };
 
@@ -242,6 +257,11 @@ class Settings {
       sound: j['sound'] as bool? ?? d.sound,
       keepDoneHours: (j['keepDoneHours'] as num?)?.toDouble() ?? d.keepDoneHours,
       idleFlushMs: (j['idleFlushMs'] as num?)?.toInt() ?? d.idleFlushMs,
+      themeMode: j['themeMode'] as String? ?? d.themeMode,
+      palette: j['palette'] as String? ?? d.palette,
+      customAccent: (j['customAccent'] as num?)?.toInt() ?? d.customAccent,
+      customNeutralHue: (j['customNeutralHue'] as num?)?.toDouble() ?? d.customNeutralHue,
+      customNeutralTint: (j['customNeutralTint'] as num?)?.toDouble() ?? d.customNeutralTint,
       allergenWords: ((j['allergenWords'] as List?) ?? d.allergenWords).map((e) => '$e').toList(),
     );
   }

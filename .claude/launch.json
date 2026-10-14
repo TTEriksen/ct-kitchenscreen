@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["server/index.js"],
       "port": 8080
+    },
+    {
+      "name": "kitchenscreen-test",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["KDS_WEB_PORT=8090", "KDS_PRINTER_PORT=9102", "KDS_DATA_DIR=data-test", "node", "server/index.js"],
+      "port": 8090
     }
   ]
 }

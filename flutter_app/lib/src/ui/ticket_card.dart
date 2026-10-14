@@ -67,7 +67,7 @@ class TicketCard extends StatelessWidget {
     );
 
     final card = AnimatedContainer(
-      duration: const Duration(milliseconds: 900),
+      duration: Duration(milliseconds: 900),
       decoration: BoxDecoration(
         color: K.card,
         borderRadius: K.radius,
@@ -104,7 +104,7 @@ class TicketCard extends StatelessWidget {
                           child: Text(head.value,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: fs * 2.1, fontWeight: FontWeight.w800, height: 1, color: K.white)),
+                              style: TextStyle(fontSize: fs * 2.1, fontWeight: FontWeight.w800, height: 1, color: K.strong)),
                         ),
                       ],
                     ],
@@ -117,7 +117,7 @@ class TicketCard extends StatelessWidget {
           ),
           // Meta line, course and the original-printout toggle.
           Container(
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: K.outlineVariant))),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: K.outlineVariant))),
             padding: EdgeInsets.only(left: fs * .8, right: fs * .3),
             child: Row(
               children: [
@@ -125,14 +125,14 @@ class TicketCard extends StatelessWidget {
                 if (pill != null)
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: fs * .5, vertical: fs * .1),
-                    decoration: const BoxDecoration(color: K.primaryContainer, borderRadius: K.radiusPill),
+                    decoration: BoxDecoration(color: K.primaryContainer, borderRadius: K.radiusPill),
                     child: Text(pill, style: TextStyle(fontSize: fs * .8, fontWeight: FontWeight.w700, color: K.onPrimaryContainer)),
                   ),
                 IconButton(
                   onPressed: onToggleRaw,
                   tooltip: 'Vis original bon',
                   isSelected: showRaw,
-                  style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
+                  style: IconButton.styleFrom(minimumSize: Size(48, 48)),
                   color: showRaw ? K.primary : K.muted,
                   icon: Icon(Icons.receipt_long_outlined, size: fs * 1.1),
                 ),
@@ -181,7 +181,7 @@ class TicketCard extends StatelessWidget {
             for (final a in p.allergens)
               Padding(
                 padding: EdgeInsets.only(top: fs * .3),
-                child: Text(a, style: TextStyle(fontSize: fs * 1.1, fontWeight: FontWeight.w700, height: 1.25, color: K.white)),
+                child: Text(a, style: TextStyle(fontSize: fs * 1.1, fontWeight: FontWeight.w700, height: 1.25, color: K.strong)),
               ),
           ],
         ),
@@ -192,10 +192,10 @@ class TicketCard extends StatelessWidget {
       add(Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.campaign_outlined, color: K.accent, size: fs * 1.6),
+          Icon(Icons.campaign_outlined, color: K.primary, size: fs * 1.6),
           SizedBox(width: fs * .5),
           Expanded(
-            child: Text(p.message, style: TextStyle(fontSize: fs * 1.3, fontWeight: FontWeight.w600, height: 1.3, color: K.white)),
+            child: Text(p.message, style: TextStyle(fontSize: fs * 1.3, fontWeight: FontWeight.w600, height: 1.3, color: K.strong)),
           ),
         ],
       ));
@@ -209,7 +209,7 @@ class TicketCard extends StatelessWidget {
       for (final it in s.items) {
         add(Container(
           padding: EdgeInsets.only(bottom: fs * .45),
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: K.key))),
+          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: K.key))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -219,8 +219,8 @@ class TicketCard extends StatelessWidget {
                   SizedBox(
                     width: fs * 1.3 * 2.0,
                     child: Text('${it.qty} ×',
-                        style: TextStyle(fontSize: fs * 1.3, fontWeight: FontWeight.w800, height: 1.2, color: K.white,
-                            fontFeatures: const [FontFeature.tabularFigures()])),
+                        style: TextStyle(fontSize: fs * 1.3, fontWeight: FontWeight.w800, height: 1.2, color: K.strong,
+                            fontFeatures: [FontFeature.tabularFigures()])),
                   ),
                   SizedBox(width: fs * .5),
                   Expanded(
@@ -248,7 +248,7 @@ class TicketCard extends StatelessWidget {
     for (final n in p.notes) {
       add(Container(
         padding: EdgeInsets.all(fs * .6),
-        decoration: const BoxDecoration(color: K.primaryContainer, borderRadius: K.radius),
+        decoration: BoxDecoration(color: K.primaryContainer, borderRadius: K.radius),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -257,7 +257,7 @@ class TicketCard extends StatelessWidget {
             Expanded(
               child: Text.rich(
                 TextSpan(children: [
-                  const TextSpan(text: 'Note: ', style: TextStyle(fontWeight: FontWeight.w800)),
+                  TextSpan(text: 'Note: ', style: TextStyle(fontWeight: FontWeight.w800)),
                   TextSpan(text: n),
                 ]),
                 style: TextStyle(fontSize: fs * 1.1, fontWeight: FontWeight.w600, height: 1.25, color: K.onPrimaryContainer),
@@ -276,7 +276,7 @@ class TicketCard extends StatelessWidget {
   Widget _raw() {
     return Container(
       padding: EdgeInsets.all(fs * .6),
-      decoration: const BoxDecoration(color: K.paper, borderRadius: K.radius),
+      decoration: BoxDecoration(color: K.paper, borderRadius: K.radius),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -292,7 +292,7 @@ class TicketCard extends StatelessWidget {
                   fontSize: fs * .85 * (l.big ? 1.45 : 1),
                   height: 1.35,
                   fontWeight: l.big || l.bold || l.red ? FontWeight.w700 : FontWeight.w400,
-                  color: l.inverse ? K.paper : (l.red ? K.bad : (l.bold ? K.white : K.ink)),
+                  color: l.inverse ? K.paper : (l.red ? K.bad : (l.bold ? K.strong : K.ink)),
                 ),
               ),
             ),
@@ -312,8 +312,8 @@ class AgeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final late = tone == Tone.late;
-    final color = switch (tone) { Tone.ok => K.ok, Tone.warn => K.accent, Tone.late => K.bad };
-    final ink = late ? K.paper : color;
+    final color = switch (tone) { Tone.ok => K.ok, Tone.warn => K.warn, Tone.late => K.bad };
+    final ink = late ? K.onBad : color;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: fs * .55, vertical: fs * .2),
       decoration: BoxDecoration(
@@ -325,7 +325,7 @@ class AgeChip extends StatelessWidget {
         Icon(late ? Icons.alarm : Icons.schedule_outlined, size: fs * 1.15, color: ink),
         SizedBox(width: fs * .25),
         Text('$prefix$minutes min',
-            style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700, color: ink, fontFeatures: const [FontFeature.tabularFigures()])),
+            style: TextStyle(fontSize: fs, fontWeight: FontWeight.w700, color: ink, fontFeatures: [FontFeature.tabularFigures()])),
       ]),
     );
   }

@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#2e251c">
+<meta name="theme-color" content="#111111">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Køkkenskærm</title>
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="app.css">
 </head>
@@ -16,7 +18,8 @@
 
   <header class="bar top">
     <div class="brand">
-      <span class="icon brand-icon" data-icon="pot"></span>
+      <img id="brand-logo" class="brand-logo" src="ctpos_reversed.png" alt="CTpos">
+      <span class="brand-divider" aria-hidden="true"></span>
       <div class="brand-text">
         <h1 id="printer-name">Køkken</h1>
         <span id="conn" class="conn ok"><span class="icon" data-icon="check"></span><span id="conn-text">Starter…</span></span>
@@ -46,6 +49,7 @@
   <main class="stage">
     <div id="rail" class="rail" tabindex="-1"></div>
     <div id="empty" class="empty" hidden>
+      <img class="empty-logo brand-swap" src="ctpos_reversed.png" alt="CTpos">
       <span class="icon empty-icon" data-icon="check"></span>
       <p class="empty-title">Ingen bonner venter</p>
       <p class="muted">Nye bonner vises her, så snart printeren modtager dem.</p>
@@ -91,6 +95,11 @@
       </header>
 
       <form id="settings-form" class="settings-body" autocomplete="off">
+        <section class="panel" style="grid-column: 1 / -1">
+          <div class="panel-head"><span class="icon accent" data-icon="palette"></span><h2>Farver</h2></div>
+          <div id="colors"></div>
+        </section>
+
         <section class="panel">
           <div class="panel-head"><span class="icon accent" data-icon="network"></span><h2>Printer-emulering</h2></div>
           <p class="muted">Skærmen svarer som en kitchen printer. Kassen sender bonner til denne enheds IP-adresse og port, som den ellers ville printe til.</p>
@@ -187,6 +196,7 @@
     </section>
   </div>
 </div>
+<script src="palette.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
