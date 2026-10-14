@@ -80,7 +80,7 @@
       <div class="drawer-head">
         <div>
           <h2>Afsluttede bonner</h2>
-          <p class="muted">Hent en bon tilbage, hvis den blev fjernet ved en fejl.</p>
+          <p id="recall-hint" class="muted">Hent en bon tilbage, hvis den blev fjernet ved en fejl.</p>
         </div>
         <button class="btn-square solid" type="button" aria-label="Luk" data-close="recall"><span class="icon" data-icon="close"></span></button>
       </div>
@@ -203,11 +203,16 @@
                   <option value="original">Original bon</option>
                 </select>
               </label>
-              <label>Gem afsluttede (timer)
+              <label>Ny arbejdsdag kl.
+                <input name="dayStart" type="time" step="60">
+              </label>
+              <label>Gem afsluttede (timer, 0 = hele dagen)
                 <input name="keepDoneHours" type="number" min="0" max="48" step="0.5" inputmode="decimal">
               </label>
             </div>
             <label class="toggle"><span><span class="icon" data-icon="sound"></span>Lyd ved ny bon</span><input name="sound" type="checkbox"></label>
+            <label class="toggle"><span><span class="icon" data-icon="history"></span>Ryd også ventende bonner fra dagen før</span><input name="dayResetActive" type="checkbox"></label>
+            <p class="muted small">Ved ny arbejdsdag ryddes Afsluttede, så tælleren starter forfra.</p>
             <label>Allergen-ord (adskilt med komma)
               <textarea name="allergenWords" rows="3"></textarea>
             </label>

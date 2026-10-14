@@ -419,6 +419,7 @@
   });
 
   function renderDone() {
+    $('recall-hint').textContent = 'Hent en bon tilbage, hvis den blev fjernet ved en fejl. Listen ryddes ved ny arbejdsdag kl. ' + ((S.settings && S.settings.dayStart) || '06:00') + '.';
     const list = $('done-list');
     if (!S.done.length) {
       list.innerHTML = '<p class="drawer-empty">Ingen afsluttede bonner endnu.</p>';

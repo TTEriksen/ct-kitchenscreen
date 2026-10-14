@@ -50,7 +50,7 @@ class _SettingsPageState extends State<SettingsPage> {
       ..port = (int.tryParse(_port.text) ?? 9100).clamp(1, 65535)
       ..warnMinutes = (int.tryParse(_warn.text) ?? 10).clamp(1, 240)
       ..lateMinutes = (int.tryParse(_late.text) ?? 15).clamp(1, 240)
-      ..keepDoneHours = (double.tryParse(_keep.text.replaceAll(',', '.')) ?? 2).clamp(0, 48)
+      ..keepDoneHours = (double.tryParse(_keep.text.replaceAll(',', '.')) ?? 0).clamp(0, 48)
       ..printerHost = _printerHost.text.trim()
       ..printerPort = (int.tryParse(_printerPort.text) ?? 9100).clamp(1, 65535)
       ..allergenWords = _words.text.split(RegExp(r'[,\n]')).map((w) => w.trim()).where((w) => w.isNotEmpty).toList();
@@ -152,7 +152,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   ]),
                   _row([
                     _drop('Bonvisning', s.view, {'parsed': 'Opdelt', 'original': 'Original bon'}, (v) => s.view = v),
-                    _field('Gem afsluttede (timer)', _keep, number: true),
+                    _field('Gem afsluttede (timer, 0 = hele dagen)', _keep, number: true),
+                  ]),
+                  _row([
+                    _timeField('Ny arbejdsdag kl.', s.dayStart, (v) => s.dayStart = v),
+                    const SizedBox(),
                   ]),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -165,6 +169,20 @@ class _SettingsPageState extends State<SettingsPage> {
                       onChanged: (v) => setState(() => s.sound = v),
                     ),
                   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(borderRadius: K.radius, border: Border.all(color: K.outlineVariant)),
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: Icon(Icons.history, color: K.ink),
+                      title: Text('Ryd også ventende bonner fra dagen før',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: K.ink)),
+                      value: s.dayResetActive,
+                      onChanged: (v) => setState(() => s.dayResetActive = v),
+                    ),
+                  ),
+                  Text('Ved ny arbejdsdag ryddes Afsluttede, så tælleren starter forfra.',
+                      style: TextStyle(fontSize: 14, color: K.muted)),
                   _field('Allergen-ord (adskilt med komma)', _words, lines: 3),
                 ]),
                 SizedBox(height: 16),
@@ -324,6 +342,28 @@ class _SettingsPageState extends State<SettingsPage> {
           for (final c in children) ...[SizedBox(height: 16), c],
         ]),
       );
+
+  /// A time of day, chosen with the clock picker (24-hour).
+  Widget _timeField(String label, String value, void Function(String) onChanged) {
+    return InkWell(
+      borderRadius: K.radiusControl,
+      onTap: () async {
+        final parts = value.split(':');
+        final picked = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay(hour: int.tryParse(parts.first) ?? 6, minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0),
+          builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), child: child!),
+        );
+        if (picked != null) {
+          setState(() => onChanged('${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}'));
+        }
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(labelText: label, suffixIcon: const Icon(Icons.schedule_outlined)),
+        child: Text(value, style: TextStyle(fontSize: 20, color: K.ink)),
+      ),
+    );
+  }
 
   Widget _row(List<Widget> children) => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         for (var i = 0; i < children.length; i++) ...[

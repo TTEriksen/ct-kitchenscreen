@@ -17,7 +17,9 @@ const DEFAULT_SETTINGS = {
   warnMinutes: 10,
   lateMinutes: 15,
   sound: true,
-  keepDoneHours: 2,
+  keepDoneHours: 0, // 0 = keep finished tickets for the whole workday
+  dayStart: '06:00', // a new workday starts here: yesterday's tickets are cleared
+  dayResetActive: true, // also clear tickets still waiting from the previous workday
   idleFlushMs: 800,
   themeMode: 'dark', // 'dark' | 'light' | 'auto'
   logo: 'ctpos', // top-bar logo: 'ctpos' | 'custom' (the venue's own; app icon stays CTpos)
@@ -98,12 +100,27 @@ class Store {
     return { active, done };
   }
 
-  purge() {
+  /**
+   * Clears what belongs to an earlier workday: finished tickets always, and
+   * tickets still waiting from then if dayResetActive is on. Finished tickets
+   * can also be cleared sooner, keepDoneHours after they were finished.
+   */
+  purge(now = Date.now()) {
+    const dayStart = workdayStart(now, this.settings.dayStart).getTime();
     const keepMs = Math.max(0, Number(this.settings.keepDoneHours) || 0) * 3600 * 1000;
-    const now = Date.now();
     const before = this.tickets.length;
-    this.tickets = this.tickets.filter((t) => t.status !== 'done' || now - Date.parse(t.doneAt) < keepMs);
-    if (this.tickets.length !== before) this.save();
+    this.tickets = this.tickets.filter((t) => {
+      if (t.status === 'done') {
+        const done = Date.parse(t.doneAt);
+        return done >= dayStart && (!keepMs || now - done < keepMs);
+      }
+      return !this.settings.dayResetActive || Date.parse(t.receivedAt) >= dayStart;
+    });
+    if (this.tickets.length !== before) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 
   updateSettings(patch) {
@@ -129,6 +146,7 @@ class Store {
     if (!/^#[0-9a-fA-F]{6}$/.test(next.customAccent)) next.customAccent = DEFAULT_SETTINGS.customAccent;
     if (!['dark', 'light', 'auto'].includes(next.themeMode)) next.themeMode = DEFAULT_SETTINGS.themeMode;
     if (!['ctpos', 'custom'].includes(next.logo)) next.logo = DEFAULT_SETTINGS.logo;
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(next.dayStart)) next.dayStart = DEFAULT_SETTINGS.dayStart;
     next.customNeutralHue = Math.min(360, Math.max(0, next.customNeutralHue));
     next.customNeutralTint = Math.min(0.4, Math.max(0, next.customNeutralTint));
     if (next.port < 1 || next.port > 65535) next.port = DEFAULT_SETTINGS.port;
@@ -154,6 +172,15 @@ class Store {
   }
 }
 
+/** When the current workday began: today at dayStart ("06:00"), or yesterday if that is still ahead. */
+function workdayStart(now, dayStart) {
+  const [h, m] = String(dayStart || '06:00').split(':').map(Number);
+  const d = new Date(now);
+  d.setHours(h || 0, m || 0, 0, 0);
+  if (d.getTime() > now) d.setDate(d.getDate() - 1);
+  return d;
+}
+
 function readJson(file, fallback) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -168,4 +195,4 @@ function writeJson(file, data) {
   fs.renameSync(tmp, file);
 }
 
-module.exports = { Store, DEFAULT_SETTINGS };
+module.exports = { Store, DEFAULT_SETTINGS, workdayStart };

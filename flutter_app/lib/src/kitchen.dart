@@ -161,11 +161,20 @@ class Kitchen extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _purge() {
+  /// Clears what belongs to an earlier workday: finished tickets always, and
+  /// tickets still waiting from then if dayResetActive is on. Finished tickets
+  /// can also be cleared sooner, keepDoneHours after they were finished.
+  /// Runs every minute, so the reset happens at the workday start itself.
+  void _purge([DateTime? at]) {
+    final now = at ?? DateTime.now();
+    final dayStart = workdayStart(now, settings.dayStart);
     final keep = Duration(minutes: (settings.keepDoneHours * 60).round());
-    final now = DateTime.now();
     final before = _tickets.length;
-    _tickets.removeWhere((t) => t.doneAt != null && now.difference(t.doneAt!) > keep);
+    _tickets.removeWhere((t) {
+      final done = t.doneAt;
+      if (done != null) return done.isBefore(dayStart) || (keep > Duration.zero && now.difference(done) > keep);
+      return settings.dayResetActive && t.receivedAt.isBefore(dayStart);
+    });
     if (_tickets.length != before) {
       _save();
       notifyListeners();
@@ -294,6 +303,14 @@ class Kitchen extends ChangeNotifier {
   }
 
   void sendTestTicket() => ingest(nextSample());
+
+  /// For tests: run the clean-up as if it were [at].
+  @visibleForTesting
+  void purgeAt(DateTime at) => _purge(at);
+
+  /// For tests: put a ticket in as it was received and finished.
+  @visibleForTesting
+  void addForTest(Ticket t) => _tickets.add(t);
 
   // ---------- Physical printer ----------
 

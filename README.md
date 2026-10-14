@@ -16,6 +16,7 @@ A kitchen display that pretends to be a network kitchen printer. Point the till'
 
 - **Colours**: Settings › Farver has Mørk / Lys / Automatisk (follows the screen's own setting), five palettes (CTpos, Brasserie, Hav, Skov, Høj kontrast) and Egen, where you pick an accent colour and a background tone. Every other colour is calculated for both light and dark mode and adjusted until text, buttons, allergens and status colours reach at least 4.5:1 contrast. With a red accent, modifiers and notes switch to blue so they never look like allergens.
 
+- **Workday**: at the time set under Ny arbejdsdag kl. (default 06:00), everything finished during the previous workday is cleared, so Afsluttede starts again at 0. Tickets still waiting from the day before are cleared too, unless that is turned off. This also happens on start-up if the screen was off overnight. Gem afsluttede can clear finished tickets sooner (in hours; 0 = the whole workday).
 - **Tap to enlarge**: tap a ticket to see it large in the middle of the screen, with the original printout beside it and its details (time received, ticket number, where it came from). Tap again to make it small.
 - **Physical printer**: Settings › Fysisk printer sends tickets to a real network printer (ESC/POS on port 9100, e.g. Epson or Star): a Print button in the large view, optional automatic printing of every new ticket, and a test print. Reprints are headed KOPI. The screen refuses its own address, so it can't print to itself in a loop.
   Before each print the printer is asked about itself on the same connection: paper and cover status (DLE EOT) and maker and model (GS I). The model gives the paper width (e.g. Epson TM-T88: 42 characters, TM-T20/TM-m30/TM-T82: 48, 58 mm models: 32), or you choose it under Papirbredde. The print area is set to the full width (GS L/GS W) and the ticket is laid out for it: separators across the whole width, "left … right" lines out to both edges, long lines wrapped at words under the dish name, double-size text counted double. A printer that is out of paper or has its cover open is reported instead of printed to. If the printer does not answer, a safe 42 characters is used.
@@ -113,7 +114,9 @@ Tap the settings button (sliders icon) in the top bar. Settings are stored in `d
 | Gul / Rød efter | 10 / 15 min | Waiting-time colours |
 | Layout | Automatisk | Or always landscape / portrait |
 | Bonvisning | Opdelt | Or always the original printout |
-| Gem afsluttede | 2 hours | How long finished tickets can be recalled |
+| Gem afsluttede | 0 (whole workday) | Clear finished tickets sooner, in hours |
+| Ny arbejdsdag kl. | 06:00 | When yesterday's tickets are cleared |
+| Ryd også ventende bonner | on | Also clear tickets still waiting from the day before |
 | Lyd ved ny bon | on | Chime on every new ticket |
 | Allergen-ord | gluten, laktose, nødder, … | Words that flag a line as an allergen |
 

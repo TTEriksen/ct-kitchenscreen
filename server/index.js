@@ -151,10 +151,9 @@ setInterval(() => {
   for (const res of clients) res.write(': ping\n\n');
 }, 25000);
 
+// Every minute: clear finished tickets that are due, and at the workday start everything from the day before.
 setInterval(() => {
-  const before = store.tickets.length;
-  store.purge();
-  if (store.tickets.length !== before) broadcast();
+  if (store.purge()) broadcast();
 }, 60000);
 
 function localIps() {

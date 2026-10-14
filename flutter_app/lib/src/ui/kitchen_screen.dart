@@ -637,7 +637,8 @@ class _RecallPanel extends StatelessWidget {
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text('Afsluttede bonner', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: K.strong)),
                       SizedBox(height: 4),
-                      Text('Hent en bon tilbage, hvis den blev fjernet ved en fejl.', style: TextStyle(fontSize: 15, color: K.muted)),
+                      Text('Hent en bon tilbage, hvis den blev fjernet ved en fejl. Listen ryddes ved ny arbejdsdag kl. ${kitchen.settings.dayStart}.',
+                          style: TextStyle(fontSize: 15, color: K.muted)),
                     ]),
                   ),
                   IconButton.filled(

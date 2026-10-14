@@ -169,6 +169,15 @@ class Ticket {
   }
 }
 
+/// When the current workday began: today at [dayStart] ("06:00"), or yesterday if that is still ahead.
+DateTime workdayStart(DateTime now, String dayStart) {
+  final parts = dayStart.split(':');
+  final h = int.tryParse(parts.first) ?? 6;
+  final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+  final today = DateTime(now.year, now.month, now.day, h, m);
+  return today.isAfter(now) ? DateTime(now.year, now.month, now.day - 1, h, m) : today;
+}
+
 class Settings {
   Settings({
     this.printerName = 'Køkkenprinter 1',
@@ -181,7 +190,9 @@ class Settings {
     this.warnMinutes = 10,
     this.lateMinutes = 15,
     this.sound = true,
-    this.keepDoneHours = 2,
+    this.keepDoneHours = 0,
+    this.dayStart = '06:00',
+    this.dayResetActive = true,
     this.idleFlushMs = 800,
     this.themeMode = 'dark',
     this.logo = 'ctpos',
@@ -207,7 +218,9 @@ class Settings {
   int warnMinutes;
   int lateMinutes;
   bool sound;
-  double keepDoneHours;
+  double keepDoneHours; // 0 = keep finished tickets for the whole workday
+  String dayStart; // 'HH:mm': a new workday starts here and yesterday's tickets are cleared
+  bool dayResetActive; // also clear tickets still waiting from the previous workday
   int idleFlushMs;
   String themeMode; // 'dark' | 'light' | 'auto'
   bool printerEnabled; // a physical network printer to print tickets on
@@ -245,6 +258,8 @@ class Settings {
         'lateMinutes': lateMinutes,
         'sound': sound,
         'keepDoneHours': keepDoneHours,
+        'dayStart': dayStart,
+        'dayResetActive': dayResetActive,
         'idleFlushMs': idleFlushMs,
         'themeMode': themeMode,
         'logo': logo,
@@ -274,6 +289,8 @@ class Settings {
       lateMinutes: (j['lateMinutes'] as num?)?.toInt() ?? d.lateMinutes,
       sound: j['sound'] as bool? ?? d.sound,
       keepDoneHours: (j['keepDoneHours'] as num?)?.toDouble() ?? d.keepDoneHours,
+      dayStart: j['dayStart'] as String? ?? d.dayStart,
+      dayResetActive: j['dayResetActive'] as bool? ?? d.dayResetActive,
       idleFlushMs: (j['idleFlushMs'] as num?)?.toInt() ?? d.idleFlushMs,
       themeMode: j['themeMode'] as String? ?? d.themeMode,
       logo: j['logo'] as String? ?? d.logo,
