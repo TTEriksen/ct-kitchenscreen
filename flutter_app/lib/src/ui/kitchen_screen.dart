@@ -32,6 +32,11 @@ class _KitchenScreenState extends State<KitchenScreen> {
   Timer? _snackTimer;
   Ticket? _snack;
   String? _focusId; // the ticket shown large
+  bool _recallOpen = false; // the "Afsluttede" panel
+  // A panel or large ticket only closes from a tap that starts after it opened:
+  // on iPad the opening touch can also reach the dimmed background.
+  bool _overlayArmed = true;
+  Timer? _armTimer;
   String? _flash; // a short message, e.g. after printing
   Timer? _flashTimer;
   double? _zoom;
@@ -56,6 +61,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
     _tick?.cancel();
     _snackTimer?.cancel();
     _flashTimer?.cancel();
+    _armTimer?.cancel();
     _scroll.dispose();
     _player.dispose();
     super.dispose();
@@ -159,6 +165,22 @@ class _KitchenScreenState extends State<KitchenScreen> {
     });
   }
 
+  void _disarm() {
+    _overlayArmed = false;
+    _armTimer?.cancel();
+    _armTimer = Timer(const Duration(milliseconds: 450), () => _overlayArmed = true);
+  }
+
+  void _openRecall() => setState(() {
+        _recallOpen = true;
+        _disarm();
+      });
+
+  void _closeRecall({bool fromBackdrop = false}) {
+    if (fromBackdrop && !_overlayArmed) return;
+    setState(() => _recallOpen = false);
+  }
+
   void _showFlash(String msg) {
     _flashTimer?.cancel();
     setState(() => _flash = msg);
@@ -189,8 +211,6 @@ class _KitchenScreenState extends State<KitchenScreen> {
     return Scaffold(
       key: _scaffold,
       backgroundColor: K.paper,
-      endDrawer: _RecallDrawer(kitchen: k, onRestore: (t) => k.restore(t)),
-      endDrawerEnableOpenDragGesture: false,
       body: SafeArea(
         child: LayoutBuilder(builder: (context, c) {
           final focused = active.where((t) => t.id == _focusId).firstOrNull;
@@ -206,6 +226,32 @@ class _KitchenScreenState extends State<KitchenScreen> {
                 ],
               ),
               if (focused != null) _focusOverlay(focused, c),
+              if (_recallOpen)
+                Positioned.fill(
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _closeRecall(fromBackdrop: true),
+                        child: Semantics(
+                          button: true,
+                          label: 'Luk afsluttede bonner',
+                          child: ColoredBox(color: Colors.black.withValues(alpha: .55)),
+                        ),
+                      ),
+                    ),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 1, end: 0),
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      builder: (_, t, child) => FractionalTranslation(translation: Offset(t, 0), child: child),
+                      child: SizedBox(
+                        width: math.min(560, c.maxWidth),
+                        child: _RecallPanel(kitchen: k, onRestore: (t) => k.restore(t), onClose: _closeRecall),
+                      ),
+                    ),
+                  ]),
+                ),
               if (_snack != null)
                 Positioned(
                   left: 16,
@@ -293,7 +339,7 @@ class _KitchenScreenState extends State<KitchenScreen> {
             _zoomControl(),
             SizedBox(width: 10),
             OutlinedButton.icon(
-              onPressed: () => _scaffold.currentState?.openEndDrawer(),
+              onPressed: _openRecall,
               icon: Icon(Icons.history, size: 24),
               label: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text('Afsluttede'),
@@ -370,7 +416,10 @@ class _KitchenScreenState extends State<KitchenScreen> {
       fresh: _fresh.contains(t.id),
       onDone: () => _done(t),
       onToggleRaw: () => setState(() => _rawOpen.contains(t.id) ? _rawOpen.remove(t.id) : _rawOpen.add(t.id)),
-      onTap: () => setState(() => _focusId = t.id),
+      onTap: () => setState(() {
+        _focusId = t.id;
+        _disarm();
+      }),
     );
   }
 
@@ -378,7 +427,10 @@ class _KitchenScreenState extends State<KitchenScreen> {
   /// buttons, on the ticket or beside it, makes it small again.
   Widget _focusOverlay(Ticket t, BoxConstraints c) {
     final m = _minutes(t);
-    void close() => setState(() => _focusId = null);
+    void close() {
+      if (!_overlayArmed) return; // the touch that opened it
+      setState(() => _focusId = null);
+    }
     return Positioned.fill(
       child: GestureDetector(
         onTap: close,
@@ -540,10 +592,14 @@ class _KitchenScreenState extends State<KitchenScreen> {
   }
 }
 
-class _RecallDrawer extends StatelessWidget {
-  const _RecallDrawer({required this.kitchen, required this.onRestore});
+/// The "Afsluttede" panel: finished tickets that can be brought back.
+/// Drawn by the kitchen screen itself (not a Scaffold drawer), so it stays open
+/// until ✕ or the dimmed background is tapped.
+class _RecallPanel extends StatelessWidget {
+  const _RecallPanel({required this.kitchen, required this.onRestore, required this.onClose});
   final Kitchen kitchen;
   final void Function(Ticket) onRestore;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -551,11 +607,11 @@ class _RecallDrawer extends StatelessWidget {
       listenable: kitchen,
       builder: (context, _) {
         final done = kitchen.done;
-        return Drawer(
-          width: math.min(560, MediaQuery.sizeOf(context).width),
-          backgroundColor: K.card,
-          shape: RoundedRectangleBorder(),
+        return Material(
+          color: K.card,
+          elevation: 16,
           child: SafeArea(
+            left: false,
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Container(
                 padding: EdgeInsets.fromLTRB(24, 20, 20, 20),
@@ -569,7 +625,7 @@ class _RecallDrawer extends StatelessWidget {
                     ]),
                   ),
                   IconButton.filled(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: onClose,
                     style: IconButton.styleFrom(backgroundColor: K.key, foregroundColor: K.ink, minimumSize: Size(64, 64), shape: RoundedRectangleBorder(borderRadius: K.radius)),
                     icon: Icon(Icons.close, size: 32, semanticLabel: 'Luk'),
                   ),

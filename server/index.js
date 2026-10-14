@@ -31,6 +31,7 @@ function state() {
     settings: store.settings,
     logos: logoInfo(),
     lastPrint,
+    printerInfo,
     status: { ...printer.status, ips: localIps() },
     serverTime: new Date().toISOString(),
   };
@@ -96,6 +97,7 @@ function broadcast() {
 
 // ---------- Physical printer ----------
 let lastPrint = null; // { ok, at, error, what }
+let printerInfo = null; // what the printer said about itself: maker, model, paper, cols, source
 
 /** True when host:port is this device's own emulated printer, which would print in a loop. */
 function isSelf(host, port) {
@@ -105,13 +107,18 @@ function isSelf(host, port) {
   return localIps().some((i) => i.address === h);
 }
 
-async function printBytes(bytes, what) {
+/**
+ * Prints on the physical printer. The printer is asked what it is first, and
+ * `build(profile, info)` makes the job for its width (see server/print.js).
+ */
+async function printJob(build, what) {
   const s = store.settings;
   const host = String(s.printerHost || '').trim();
   try {
     if (!host) throw new Error('Ingen printer valgt. Indtast printerens IP-adresse under Opsætning.');
     if (isSelf(host, s.printerPort)) throw new Error('Printeradressen peger på denne skærm selv. Vælg den rigtige printers IP-adresse.');
-    await print.send(host, s.printerPort, bytes);
+    const { profile, info } = await print.printJob(host, s.printerPort, s.printerPaper, build);
+    printerInfo = { ...info, ...profile, at: new Date().toISOString() };
     lastPrint = { ok: true, at: new Date().toISOString(), what };
   } catch (err) {
     lastPrint = { ok: false, at: new Date().toISOString(), what, error: err.message };
@@ -121,6 +128,9 @@ async function printBytes(bytes, what) {
   return lastPrint;
 }
 
+const printTicket = (t, copy) =>
+  printJob((profile) => print.ticketBytes(t.lines || [], { profile, copy }), 'Bon ' + (t.orderNo || t.seq));
+
 function hhmmNow() {
   const d = new Date();
   return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -128,7 +138,7 @@ function hhmmNow() {
 
 store.onChange((kind, payload) => {
   if (kind === 'added' && store.settings.printerEnabled && store.settings.autoPrint) {
-    printBytes(print.ticketBytes(payload.lines || []), 'Bon ' + (payload.orderNo || payload.seq));
+    printTicket(payload);
   }
   if (kind === 'settings') {
     const { old, next } = payload;
@@ -238,12 +248,12 @@ const server = http.createServer(async (req, res) => {
   if (pm && req.method === 'POST') {
     const t = store.tickets.find((x) => x.id === decodeURIComponent(pm[1]));
     if (!t) return sendJson(res, 404, { error: 'Bonnen findes ikke' });
-    const r = await printBytes(print.ticketBytes(t.lines || [], { copy: 'KOPI ' + hhmmNow() }), 'Bon ' + (t.orderNo || t.seq));
+    const r = await printTicket(t, 'KOPI ' + hhmmNow());
     return sendJson(res, r.ok ? 200 : 502, r);
   }
 
   if (p === '/api/printer/test' && req.method === 'POST') {
-    const r = await printBytes(print.testPageBytes(store.settings.printerName), 'Testudskrift');
+    const r = await printJob((profile, info) => print.ticketBytes(print.testPageLines(store.settings.printerName, profile, info), { profile }), 'Testudskrift');
     return sendJson(res, r.ok ? 200 : 502, r);
   }
 

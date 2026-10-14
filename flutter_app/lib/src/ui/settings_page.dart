@@ -241,6 +241,18 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  String _printerInfoText(Kitchen k) {
+    final pi = k.printerInfo;
+    if (pi == null) return 'Printerens model og bredde aflæses ved første udskrift eller testudskrift.';
+    final (p, info) = pi;
+    final how = switch (p.source) {
+      'printer' => 'aflæst fra printeren',
+      'setting' => 'valgt i opsætningen',
+      _ => 'printeren oplyste ikke sin model, så den sikre bredde bruges. Vælg papirbredde, hvis bonnen skal bruge hele papiret',
+    };
+    return 'Printer: ${info.name.isEmpty ? 'ukendt model' : info.name} · ${p.paper} · ${p.cols} tegn pr. linje ($how).';
+  }
+
   Widget _printerPanel(Kitchen k) {
     final last = k.lastPrint;
     Widget toggle(String label, IconData icon, bool value, ValueChanged<bool> onChanged) => Container(
@@ -255,13 +267,20 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         );
     return _panel(Icons.print_outlined, 'Fysisk printer', [
-      Text('Print bonner på en rigtig netværksprinter (ESC/POS, fx Epson eller Star) i køkkenet.',
+      Text('Print bonner på en rigtig netværksprinter (ESC/POS, fx Epson eller Star) i køkkenet. Før hver udskrift spørges printeren om model og papir, og bonnen sættes op til hele papirets bredde.',
           style: TextStyle(fontSize: 15, height: 1.4, color: K.muted)),
       toggle('Brug printer', Icons.print_outlined, s.printerEnabled, (v) => s.printerEnabled = v),
       _row([
         _field('Printerens IP-adresse', _printerHost),
         _field('Port', _printerPort, number: true),
       ]),
+      _drop('Papirbredde', s.printerPaper, {
+        'auto': 'Automatisk (spørg printeren)',
+        '80-48': '80 mm · 48 tegn',
+        '80-42': '80 mm · 42 tegn',
+        '58-32': '58 mm · 32 tegn',
+      }, (v) => s.printerPaper = v),
+      Text(_printerInfoText(k), style: TextStyle(fontSize: 14, height: 1.4, color: K.muted)),
       toggle('Udskriv alle nye bonner automatisk', Icons.receipt_long_outlined, s.autoPrint, (v) => s.autoPrint = v),
       Text('Ellers printes en bon fra den store visning: tryk på bonnen, og tryk Print. En genudskrift får overskriften KOPI.',
           style: TextStyle(fontSize: 14, height: 1.4, color: K.muted)),
@@ -273,7 +292,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   setState(() => _testing = true);
                   final test = s.copy()
                     ..printerHost = _printerHost.text.trim()
-                    ..printerPort = (int.tryParse(_printerPort.text) ?? 9100).clamp(1, 65535);
+                    ..printerPort = (int.tryParse(_printerPort.text) ?? 9100).clamp(1, 65535)
+                    ..printerPaper = s.printerPaper;
                   await k.testPrint(test);
                   if (mounted) setState(() => _testing = false);
                 },

@@ -58,17 +58,20 @@ class Kitchen extends ChangeNotifier {
   /// The venue's own top-bar logo, one for dark and one for light mode (either may be missing).
   PrintResult? lastPrint;
 
+  /// What the printer said about itself at the last print, and the width used.
+  (PaperProfile, PrinterInfo)? printerInfo;
+
   Uint8List? logoDark;
   Uint8List? logoLight;
 
   /// New tickets as they arrive (for the chime).
   Stream<Ticket> get arrivals => _arrivals.stream;
 
-  static Future<Kitchen> open() async {
-    final dir = await _dataDir();
-    final k = Kitchen._(dir);
+  /// [dir] and [listen] are for tests: another storage folder, and no printer port.
+  static Future<Kitchen> open({Directory? dir, bool listen = true}) async {
+    final k = Kitchen._(dir ?? await _dataDir());
     await k._load();
-    await k.startPrinter();
+    if (listen) await k.startPrinter();
     k.refreshIps();
     k._purgeTimer = Timer.periodic(const Duration(minutes: 1), (_) => k._purge());
     return k;
@@ -271,7 +274,7 @@ class Kitchen extends ChangeNotifier {
       _tickets.add(t);
       _arrivals.add(t);
       if (settings.printerEnabled && settings.autoPrint) {
-        unawaited(_print(ticketBytes(lines), 'Bon ${t.number}'));
+        unawaited(_print((p, _) => ticketBytes(lines, profile: p), 'Bon ${t.number}'));
       }
     }
     if (pages.isNotEmpty) {
@@ -290,10 +293,11 @@ class Kitchen extends ChangeNotifier {
   Future<PrintResult> printTicket(Ticket t) {
     final now = DateTime.now();
     final hm = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    return _print(ticketBytes(t.lines, copy: 'KOPI $hm'), 'Bon ${t.number}');
+    return _print((p, _) => ticketBytes(t.lines, copy: 'KOPI $hm', profile: p), 'Bon ${t.number}');
   }
 
-  Future<PrintResult> testPrint(Settings s) => _print(testPageBytes(s.printerName), 'Testudskrift', s);
+  Future<PrintResult> testPrint(Settings s) =>
+      _print((p, info) => ticketBytes(testPageLines(s.printerName, p, info), profile: p), 'Testudskrift', s);
 
   /// True when host:port is this tablet's own emulated printer, which would print in a loop.
   bool _isSelf(String host, int port) {
@@ -303,7 +307,8 @@ class Kitchen extends ChangeNotifier {
     return ips.any((i) => i.address == h);
   }
 
-  Future<PrintResult> _print(List<int> bytes, String what, [Settings? using]) async {
+  /// Prints on the physical printer: asks it what it is, then [build] makes the job for its width.
+  Future<PrintResult> _print(List<int> Function(PaperProfile, PrinterInfo) build, String what, [Settings? using]) async {
     final s = using ?? settings;
     final host = s.printerHost.trim();
     PrintResult r;
@@ -312,7 +317,7 @@ class Kitchen extends ChangeNotifier {
       if (_isSelf(host, s.printerPort)) {
         throw PrintError('Printeradressen peger på denne skærm selv. Vælg den rigtige printers IP-adresse.');
       }
-      await sendToPrinter(host, s.printerPort, bytes);
+      printerInfo = await printJob(host, s.printerPort, s.printerPaper, build);
       r = PrintResult(ok: true, at: DateTime.now(), what: what);
     } catch (e) {
       r = PrintResult(ok: false, at: DateTime.now(), what: what, error: '$e');

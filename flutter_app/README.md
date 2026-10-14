@@ -11,7 +11,7 @@ It does the same as the browser version in the repository root:
 - **Kiosk behaviour:** a chime on new tickets, full screen, and the screen kept on. Tickets are saved on the tablet, so a restart loses nothing.
 - **Colours:** Settings › Farver has dark, light or automatic, five palettes plus your own accent and background tone, with a live preview of both modes and their contrast ratios. Colours are calculated in `lib/src/ui/palette.dart` (same maths as the web version's `public/palette.js`).
 - **Tap to enlarge:** tap a ticket to see it large, with the original printout and details beside it; tap again to make it small.
-- **Physical printer:** Settings › Fysisk printer prints tickets on a real network printer (ESC/POS, port 9100): Print in the large view, optional automatic printing of every new ticket, and a test print.
+- **Physical printer:** Settings › Fysisk printer prints tickets on a real network printer (ESC/POS, port 9100): Print in the large view, optional automatic printing of every new ticket, and a test print. Before each print the printer is asked for its model and paper status, and the ticket is laid out for the full paper width (or the width chosen under Papirbredde) so no line runs over.
 - **Own logo:** Settings › Logo i topbjælken replaces the CTpos wordmark in the top bar and on the empty screen with the venue's logo from the tablet's photos: one image for dark mode, one for light mode, or one for both. The app icon and start screen stay CTpos.
 
 ## Connecting the till

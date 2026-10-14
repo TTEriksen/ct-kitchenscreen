@@ -150,7 +150,7 @@
         <div class="col">
           <section class="panel">
             <div class="panel-head"><span class="icon accent" data-icon="print"></span><h2>Fysisk printer</h2></div>
-            <p class="muted">Print bonner på en rigtig netværksprinter (ESC/POS, fx Epson eller Star) i køkkenet.</p>
+            <p class="muted">Print bonner på en rigtig netværksprinter (ESC/POS, fx Epson eller Star) i køkkenet. Før hver udskrift spørges printeren om model og papir, og bonnen sættes op til hele papirets bredde.</p>
             <label class="toggle"><span><span class="icon" data-icon="print"></span>Brug printer</span><input name="printerEnabled" type="checkbox"></label>
             <div class="grid2">
               <label>Printerens IP-adresse
@@ -159,7 +159,16 @@
               <label>Port
                 <input name="printerPort" type="number" min="1" max="65535" inputmode="numeric">
               </label>
+              <label>Papirbredde
+                <select name="printerPaper">
+                  <option value="auto">Automatisk (spørg printeren)</option>
+                  <option value="80-48">80 mm · 48 tegn</option>
+                  <option value="80-42">80 mm · 42 tegn</option>
+                  <option value="58-32">58 mm · 32 tegn</option>
+                </select>
+              </label>
             </div>
+            <p id="printer-info" class="muted small"></p>
             <label class="toggle"><span><span class="icon" data-icon="receipt"></span>Udskriv alle nye bonner automatisk</span><input name="autoPrint" type="checkbox"></label>
             <p class="muted small">Ellers printes en bon fra den store visning: tryk på bonnen, og tryk Print. En genudskrift får overskriften KOPI.</p>
             <div class="row-wrap">

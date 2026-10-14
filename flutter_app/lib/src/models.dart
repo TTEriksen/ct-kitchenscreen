@@ -189,6 +189,7 @@ class Settings {
     this.printerHost = '',
     this.printerPort = 9100,
     this.autoPrint = false,
+    this.printerPaper = 'auto',
     this.palette = 'ctpos',
     this.customAccent = 0xFFED1C24,
     this.customNeutralHue = 0,
@@ -213,6 +214,7 @@ class Settings {
   String printerHost;
   int printerPort;
   bool autoPrint; // print every incoming ticket as well as showing it
+  String printerPaper; // 'auto' (ask the printer) | '80-48' | '80-42' | '58-32'
   String logo; // top-bar logo: 'ctpos' | 'custom' (the venue's own; app icon stays CTpos)
   String palette; // a preset id or 'custom'
   int customAccent; // ARGB
@@ -250,6 +252,7 @@ class Settings {
         'printerHost': printerHost,
         'printerPort': printerPort,
         'autoPrint': autoPrint,
+        'printerPaper': printerPaper,
         'palette': palette,
         'customAccent': customAccent,
         'customNeutralHue': customNeutralHue,
@@ -278,6 +281,7 @@ class Settings {
       printerHost: j['printerHost'] as String? ?? d.printerHost,
       printerPort: (j['printerPort'] as num?)?.toInt() ?? d.printerPort,
       autoPrint: j['autoPrint'] as bool? ?? d.autoPrint,
+      printerPaper: j['printerPaper'] as String? ?? d.printerPaper,
       palette: j['palette'] as String? ?? d.palette,
       customAccent: (j['customAccent'] as num?)?.toInt() ?? d.customAccent,
       customNeutralHue: (j['customNeutralHue'] as num?)?.toDouble() ?? d.customNeutralHue,

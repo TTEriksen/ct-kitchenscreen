@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS = {
   printerHost: '',
   printerPort: 9100,
   autoPrint: false, // print every incoming ticket as well as showing it
+  printerPaper: 'auto', // 'auto' (ask the printer) | '80-48' | '80-42' | '58-32'
   palette: 'ctpos', // 'ctpos' | 'brasserie' | 'hav' | 'skov' | 'kontrast' | 'custom'
   customAccent: '#ED1C24',
   customNeutralHue: 0,
@@ -133,6 +134,7 @@ class Store {
     if (next.port < 1 || next.port > 65535) next.port = DEFAULT_SETTINGS.port;
     if (next.printerPort < 1 || next.printerPort > 65535) next.printerPort = DEFAULT_SETTINGS.printerPort;
     if (!/^[A-Za-z0-9.:-]{0,253}$/.test(next.printerHost)) next.printerHost = '';
+    if (!['auto', '80-48', '80-42', '58-32'].includes(next.printerPaper)) next.printerPaper = 'auto';
     if (next.webPort < 1 || next.webPort > 65535) next.webPort = DEFAULT_SETTINGS.webPort;
     const old = this.settings;
     this.settings = next;

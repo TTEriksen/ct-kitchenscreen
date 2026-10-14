@@ -790,7 +790,7 @@
     btn.disabled = true;
     // Test with the address typed in, even before Gem: save the printer fields first.
     const body = {};
-    for (const name of ['printerEnabled', 'printerHost', 'printerPort', 'autoPrint']) {
+    for (const name of ['printerEnabled', 'printerHost', 'printerPort', 'autoPrint', 'printerPaper']) {
       const el = form.elements[name];
       body[name] = el.type === 'checkbox' ? el.checked : el.value;
     }
@@ -800,6 +800,7 @@
       await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const r = await fetch('/api/printer/test', { method: 'POST' });
       S.lastPrint = await r.json();
+      S.printerInfo = (await fetch('/api/state').then((x) => x.json())).printerInfo;
     } catch {
       S.lastPrint = { ok: false, error: 'Kunne ikke nå skærmens server' };
     }
@@ -807,6 +808,12 @@
     renderPrintStatus();
   });
   function renderPrintStatus() {
+    const i = S.printerInfo;
+    const name = i && [i.maker, i.model].filter(Boolean).join(' ');
+    const how = !i ? '' : i.source === 'printer' ? 'aflæst fra printeren' : i.source === 'setting' ? 'valgt i opsætningen' : 'printeren oplyste ikke sin model, så den sikre bredde bruges. Vælg papirbredde, hvis bonnen skal bruge hele papiret';
+    $('printer-info').textContent = i
+      ? `Printer: ${name || 'ukendt model'} · ${i.paper} · ${i.cols} tegn pr. linje (${how}).`
+      : 'Printerens model og bredde aflæses ved første udskrift eller testudskrift.';
     const p = S.lastPrint;
     const el = $('print-status');
     if (!p) { el.textContent = 'Ingen udskrifter endnu.'; el.style.color = ''; return; }
@@ -846,6 +853,7 @@
       S.seen = new Set(S.active.map((t) => t.id));
     }
     S.lastPrint = data.lastPrint;
+    S.printerInfo = data.printerInfo;
     if ($('settings').hidden) applyTheme(S.settings);
     applyLayout();
     render();
