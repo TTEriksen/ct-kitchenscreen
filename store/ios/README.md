@@ -74,4 +74,4 @@ The app declares `ITSAppUsesNonExemptEncryption = NO` (it uses no encryption), s
 
 ## Notes for App Review
 
-> The app receives kitchen tickets from a point-of-sale system over the local network (it acts as a network printer on port 9100). To try it without a till: open Settings (the sliders button at the top), scroll to "Drift" and tap **Modtag testbon**. Each tap adds a sample ticket. Tap a ticket to see it large, and tap **Færdig** to finish it. The app asks for Local Network access because the till connects to it, and for Photos only if the user chooses their own logo.
+> The app receives kitchen tickets from a point-of-sale system over the local network (it acts as a network printer on port 9100). To try it without a till: open Settings (the gear button at the top right), scroll to "Drift" and tap **Modtag testbon**. Each tap adds a sample ticket. Tap a ticket to see it large, and tap **Færdig** to finish it. The app asks for Local Network access because the till connects to it, and for Photos only if the user chooses their own logo.
